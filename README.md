@@ -28,10 +28,13 @@ Mads:
 
 4. Space Defense Station art + Mechanics/Scripts
 
+5. Backround Particle Art
+
 Jaysen:
 
 1. Enemy Movement and Mechanics/Scripts
 2. Start Menu Art + UI
+3. Backround Particle Mechanics
 
 Daan Pronk: 
    
