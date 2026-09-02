@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class BattleshipShooter : MonoBehaviour
 {
@@ -16,11 +16,10 @@ public class BattleshipShooter : MonoBehaviour
     [SerializeField] private float fireRate = 1f;
 
     private const float BulletSpeed = 15f;
-    private Coroutine _firingRoutine;
+    private float _nextFireTime;
 
     private void Reset()
     {
-        // helpful defaults when adding component
         firePoint = transform;
     }
 
@@ -30,65 +29,48 @@ public class BattleshipShooter : MonoBehaviour
         {
             firePoint = transform;
         }
-    }
 
-    private void OnDisable()
-    {
-        StopFiring();
+        _nextFireTime = 0f;
     }
 
     private void Update()
     {
-        if (Input.GetMouseButton(0))
+        if (!IsFireHeld())
         {
-            StartFiring();
+            return;
         }
-        else
+
+        if (Time.time < _nextFireTime)
         {
-            StopFiring();
+            return;
         }
+
+        FireOnce();
+        _nextFireTime = Time.time + (1f / Mathf.Max(0.0001f, fireRate));
     }
 
-    public void StartFiring()
+    private bool IsFireHeld()
     {
-        if (_firingRoutine != null) return;
-        _firingRoutine = StartCoroutine(FireLoop());
-    }
-
-    public void StopFiring()
-    {
-        if (_firingRoutine == null) return;
-
-        StopCoroutine(_firingRoutine);
-        _firingRoutine = null;
-    }
-
-    private IEnumerator FireLoop()
-    {
-        var interval = 1f / Mathf.Max(0.0001f, fireRate);
-
-        while (true)
-        {
-            FireOnce();
-            yield return new WaitForSeconds(interval);
-        }
+        return (Mouse.current != null && Mouse.current.leftButton.isPressed)
+            || (Keyboard.current != null && Keyboard.current.wKey.isPressed);
     }
 
     private void FireOnce()
     {
-        if (bulletPrefab == null) return;
+        if (bulletPrefab == null)
+        {
+            return;
+        }
 
         var spawn = firePoint != null ? firePoint : transform;
         var bulletGO = Instantiate(bulletPrefab, spawn.position, spawn.rotation);
 
-        // If bullet has the Bullet component use it for initialization
-        var bulletComp = bulletGO.GetComponent<Bullet>();
-        if (bulletComp == null)
+        var bullet = bulletGO.GetComponent<Bullet>();
+        if (bullet == null)
         {
-            bulletComp = bulletGO.AddComponent<Bullet>();
+            bullet = bulletGO.AddComponent<Bullet>();
         }
 
-        // direction uses forward for 3D; if your prefab is 2D oriented differently adjust accordingly
-        bulletComp.Initialize(BulletSpeed, damage, bulletRange, spawn.forward);
+                bullet.Initialize(BulletSpeed, damage, bulletRange, spawn.right);
     }
 }
