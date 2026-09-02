@@ -15,11 +15,17 @@ public class BattleshipShooter : MonoBehaviour
     [Tooltip("Bullets per second")]
     [SerializeField] private float fireRate = 1f;
 
+    [Header("Player input selector")]
+    [Tooltip("0 = use 'W' key (player 1). 1 = use 'UpArrow' key (player 2). Values in-between choose by <=0.5 or >0.5.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float inputSelector = 0f;
+
     private const float BulletSpeed = 15f;
     private float _nextFireTime;
 
     private void Reset()
     {
+        // helpful defaults when adding component
         firePoint = transform;
     }
 
@@ -35,7 +41,7 @@ public class BattleshipShooter : MonoBehaviour
 
     private void Update()
     {
-        if (!IsFireHeld())
+        if (!IsFirePressed())
         {
             return;
         }
@@ -49,28 +55,36 @@ public class BattleshipShooter : MonoBehaviour
         _nextFireTime = Time.time + (1f / Mathf.Max(0.0001f, fireRate));
     }
 
-    private bool IsFireHeld()
+    private bool IsFirePressed()
     {
-        return (Mouse.current != null && Mouse.current.leftButton.isPressed)
-            || (Keyboard.current != null && Keyboard.current.wKey.isPressed);
+        if (Keyboard.current == null) return false;
+
+        // selector: 0 -> W, 1 -> UpArrow. Use <=0.5 to choose W for player1, >0.5 for player2.
+        if (inputSelector <= 0.5f)
+        {
+            return Keyboard.current.wKey.isPressed;
+        }
+        else
+        {
+            return Keyboard.current.upArrowKey.isPressed;
+        }
     }
 
     private void FireOnce()
     {
-        if (bulletPrefab == null)
-        {
-            return;
-        }
+        if (bulletPrefab == null) return;
 
         var spawn = firePoint != null ? firePoint : transform;
         var bulletGO = Instantiate(bulletPrefab, spawn.position, spawn.rotation);
 
-        var bullet = bulletGO.GetComponent<Bullet>();
-        if (bullet == null)
+        // Ensure 2D movement component exists and initialize; prefab need not have a Bullet component
+        var bulletComp = bulletGO.GetComponent<Bullet>();
+        if (bulletComp == null)
         {
-            bullet = bulletGO.AddComponent<Bullet>();
+            bulletComp = bulletGO.AddComponent<Bullet>();
         }
 
-                bullet.Initialize(BulletSpeed, damage, bulletRange, spawn.right);
+        // For 2D, commonly 'right' is forward; adjust if your sprites use a different forward.
+        bulletComp.Initialize(BulletSpeed, damage, bulletRange, spawn.up);
     }
 }

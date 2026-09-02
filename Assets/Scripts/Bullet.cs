@@ -13,6 +13,10 @@ public class Bullet : MonoBehaviour
     private Vector3 _direction;
     private Vector3 _startPosition;
 
+    // Cached rigidbodies so velocity can be changed later
+    private Rigidbody _rb3D;
+    private Rigidbody2D _rb2D;
+
     public void Initialize(float speed, float damage, float range, Vector3 direction)
     {
         _speed = speed;
@@ -21,21 +25,19 @@ public class Bullet : MonoBehaviour
         _direction = direction.normalized;
         _startPosition = transform.position;
 
-        // prefer existing rigidbodies
-        var rb = GetComponent<Rigidbody>();
-        if (rb != null)
+        // cache references for later velocity updates
+        _rb3D = GetComponent<Rigidbody>();
+        if (_rb3D != null)
         {
-            rb.useGravity = false;
-            rb.linearVelocity = _direction * _speed;
+            _rb3D.linearVelocity = _direction * _speed;
             return;
         }
 
-        var rb2d = GetComponent<Rigidbody2D>();
-        if (rb2d != null)
+        _rb2D = GetComponent<Rigidbody2D>();
+        if (_rb2D != null)
         {
-            rb2d.gravityScale = 0f;
             var dir2D = new Vector2(_direction.x, _direction.y);
-            rb2d.linearVelocity = dir2D.normalized * _speed;
+            _rb2D.linearVelocity = dir2D.normalized * _speed;
             return;
         }
 
@@ -70,5 +72,64 @@ public class Bullet : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         Destroy(gameObject);
+    }
+
+    // --- New velocity API ---
+
+    /// <summary>
+    /// Set velocity as a 2D vector (x,y). Updates internal direction and speed.
+    /// If a Rigidbody2D exists it will be applied; if a Rigidbody (3D) exists the Z will be 0.
+    /// If no rigidbody exists the manual movement will use the new direction/speed.
+    /// </summary>
+    public void SetVelocity(Vector2 velocity)
+    {
+        if (velocity.sqrMagnitude <= 0f)
+        {
+            // stop movement
+            _speed = 0f;
+            return;
+        }
+
+        _direction = new Vector3(velocity.x, velocity.y, 0f).normalized;
+        _speed = velocity.magnitude;
+
+        if (_rb2D != null)
+        {
+            _rb2D.linearVelocity = velocity;
+            return;
+        }
+
+        if (_rb3D != null)
+        {
+            _rb3D.linearVelocity = new Vector3(velocity.x, velocity.y, 0f);
+            return;
+        }
+
+        // no rigidbody: ManualMove will use updated _direction and _speed
+    }
+
+    /// <summary>
+    /// Set speed while keeping current direction. If a rigidbody exists its velocity is updated.
+    /// </summary>
+    public void SetSpeed(float speed)
+    {
+        _speed = Mathf.Max(0f, speed);
+
+        if (_direction.sqrMagnitude <= 0f) return;
+
+        if (_rb2D != null)
+        {
+            var v2 = new Vector2(_direction.x, _direction.y).normalized * _speed;
+            _rb2D.linearVelocity = v2;
+            return;
+        }
+
+        if (_rb3D != null)
+        {
+            _rb3D.linearVelocity = _direction.normalized * _speed;
+            return;
+        }
+
+        // manual movement will use updated _speed
     }
 }
