@@ -47,3 +47,19 @@ Kevin:
 Fardin:
 
 1. Kabel Management Voor de arcade knoppen
+
+---
+
+### Developers
+Het project is gemaakt door:
+* **Daan Pronk** (Full-Stack Software Developer)
+* **Fardin Mohammed** (Full-Stack Software Developer)
+* **Kevin Mei** (Full-Stack Software Developer)
+* **Nathan Cruz Martinez** (Full-Stack Software Developer)
+* **Mads Hoogeveen** (Game Developer)
+* **Daan Bosman** (Game Developer)
+* **Joey Joosten** (Game Developer)
+* **jayson van der Wal** (Game Developer)
+* **Bo Bolweg** (Game Developer)
+* **Kareem Manberg** (Game Developer)
+
