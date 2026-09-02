@@ -15,4 +15,15 @@ void setup() {
 }
 
 void loop() {
+    if(bleKeyboard.isConnected()) {
+
+    buttonState_start = digitalRead(buttonPin_start);
+
+    if(buttonState_start == HIGH){
+      bleKeyboard.press('w');
+    }
+    if(buttonState_start == LOW){
+      bleKeyboard.release('w');
+    }
+  }
 }
