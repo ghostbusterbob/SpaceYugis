@@ -2,8 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Lightweight bullet component that sets motion.
-/// Works with both 3D (Rigidbody) and 2D (Rigidbody2D) setups.
+/// 2D-focused bullet. Exposes damage so enemies can read it and fixes Rigidbody API usage.
 /// </summary>
 public class Bullet : MonoBehaviour
 {
@@ -16,6 +15,9 @@ public class Bullet : MonoBehaviour
     // Cached rigidbodies so velocity can be changed later
     private Rigidbody _rb3D;
     private Rigidbody2D _rb2D;
+
+    // Public read-only accessor used by Enemy.cs (fixes CS1061)
+    public float Damage => _damage;
 
     public void Initialize(float speed, float damage, float range, Vector3 direction)
     {

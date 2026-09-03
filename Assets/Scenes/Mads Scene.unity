@@ -256,6 +256,81 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &301477453
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 301477456}
+  - component: {fileID: 301477455}
+  - component: {fileID: 301477454}
+  m_Layer: 0
+  m_Name: Level System
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &301477454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 301477453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 960ac62c6262436439c5c044003be50f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelManager
+  enemyPrefabs:
+  - {fileID: 950098319105781091, guid: ec41bda2215fb9c4399c7a4f14569b46, type: 3}
+  bossPrefab: {fileID: 7044617970457361612, guid: 6622f82a962f8654cbe4110c31aeeca6, type: 3}
+  baseRows: 3
+  baseCols: 6
+  startPosition: {x: -6, y: 4}
+  horizontalSpacing: 1.6
+  verticalSpacing: 1.1
+  moveSpeed: 1.5
+  leftBound: -7.5
+  rightBound: 7.5
+  descentAmount: 0.6
+  enemyCountIncreasePercent: 0.1
+  enemyHealthIncreasePercent: 0.1
+  baseEnemyHealth: 10
+  formationParent: {fileID: 2007647307}
+  startingLevel: 1
+--- !u!114 &301477455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 301477453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c22bf5f814d981f4d9680c4d81017ab2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+--- !u!4 &301477456
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 301477453}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.62677, y: 1.34468, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2007647307}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &304010974
 GameObject:
   m_ObjectHideFlags: 0
@@ -477,9 +552,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleshipShooter
   bulletPrefab: {fileID: 2579992567038757543, guid: 40ead5a59cc96d1408a3b71ad37ef604, type: 3}
   firePoint: {fileID: 1275133671}
-  bulletRange: 50
+  bulletRange: 1000
   damage: 10
-  fireRate: 3
+  fireRate: 4
   inputSelector: 1
 --- !u!114 &1275133669
 MonoBehaviour:
@@ -785,6 +860,37 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &2007647306
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2007647307}
+  m_Layer: 0
+  m_Name: Formation parent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2007647307
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007647306}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.62677, y: -0.34467995, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 301477456}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -793,3 +899,4 @@ SceneRoots:
   - {fileID: 564542414}
   - {fileID: 1464343501}
   - {fileID: 1275133671}
+  - {fileID: 301477456}
