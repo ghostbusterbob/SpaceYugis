@@ -1,19 +1,17 @@
 #include <BleKeyboard.h>
 
-BleKeyboard bleKeyboard("Arcade Controller", "ESP32", 100);
+BleKeyboard bleKeyboard("Daan", "ESP32", 100);
 
-// --- PIN DEFINITIONS (Fill in your GPIO numbers) ---
-const int buttonPin_p1_move_left  = 33; // P1 Left  -> 'a'
-const int buttonPin_p1_move_right = 25; // P1 Right -> 'd'
-const int buttonPin_p1_attack     = 26; // P1 Attack -> 'w'
+const int buttonPin_p1_move_left  = 33;
+const int buttonPin_p1_move_right = 25;
+const int buttonPin_p1_attack     = 26;
 
-const int buttonPin_p2_move_left  = 14; // P2 Left  -> KEY_LEFT_ARROW
-const int buttonPin_p2_move_right = 12; // P2 Right -> KEY_RIGHT_ARROW
-const int buttonPin_p2_attack     = 13; // P2 Attack -> KEY_UP_ARROW
+const int buttonPin_p2_move_left  = 14;
+const int buttonPin_p2_move_right = 12;
+const int buttonPin_p2_attack     = 13;
 
-const int buttonPin_start         = 27; // Start     -> ' ' (Space)
+const int buttonPin_start         = 27;
 
-// --- LAST BUTTON STATES ---
 int lastButtonState_p1_move_left  = HIGH;
 int lastButtonState_p1_move_right = HIGH;
 int lastButtonState_p1_attack     = HIGH;
@@ -43,7 +41,6 @@ void setup() {
 void loop() {
   if (bleKeyboard.isConnected()) {
 
-    // --- P1 MOVE LEFT ('a') ---
     int currentButtonState_p1_move_left = digitalRead(buttonPin_p1_move_left);
     if (currentButtonState_p1_move_left != lastButtonState_p1_move_left) {
       if (currentButtonState_p1_move_left == LOW) {
@@ -57,7 +54,6 @@ void loop() {
       delay(15);
     }
 
-    // --- P1 MOVE RIGHT ('d') ---
     int currentButtonState_p1_move_right = digitalRead(buttonPin_p1_move_right);
     if (currentButtonState_p1_move_right != lastButtonState_p1_move_right) {
       if (currentButtonState_p1_move_right == LOW) {
@@ -71,7 +67,6 @@ void loop() {
       delay(15);
     }
 
-    // --- P1 ATTACK ('w') ---
     int currentButtonState_p1_attack = digitalRead(buttonPin_p1_attack);
     if (currentButtonState_p1_attack != lastButtonState_p1_attack) {
       if (currentButtonState_p1_attack == LOW) {
@@ -85,7 +80,6 @@ void loop() {
       delay(15);
     }
 
-    // --- P2 MOVE LEFT (Left Arrow) ---
     int currentButtonState_p2_move_left = digitalRead(buttonPin_p2_move_left);
     if (currentButtonState_p2_move_left != lastButtonState_p2_move_left) {
       if (currentButtonState_p2_move_left == LOW) {
@@ -99,7 +93,6 @@ void loop() {
       delay(15);
     }
 
-    // --- P2 MOVE RIGHT (Right Arrow) ---
     int currentButtonState_p2_move_right = digitalRead(buttonPin_p2_move_right);
     if (currentButtonState_p2_move_right != lastButtonState_p2_move_right) {
       if (currentButtonState_p2_move_right == LOW) {
@@ -113,7 +106,6 @@ void loop() {
       delay(15);
     }
 
-    // --- P2 ATTACK (Up Arrow) ---
     int currentButtonState_p2_attack = digitalRead(buttonPin_p2_attack);
     if (currentButtonState_p2_attack != lastButtonState_p2_attack) {
       if (currentButtonState_p2_attack == LOW) {
@@ -127,7 +119,6 @@ void loop() {
       delay(15);
     }
 
-    // --- START (Space) ---
     int currentButtonState_start = digitalRead(buttonPin_start);
     if (currentButtonState_start != lastButtonState_start) {
       if (currentButtonState_start == LOW) {
