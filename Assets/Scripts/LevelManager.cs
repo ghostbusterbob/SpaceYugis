@@ -1,51 +1,142 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Space-Invaders style level manager and spawner.
-/// Configure enemy prefabs, boss prefab and tuning parameters in the Inspector.
-/// Attach to a persistent GameObject in the scene.
-/// </summary>
 public class LevelManager : MonoBehaviour
 {
-    [Header("Prefabs")]
-    [Tooltip("Enemy prefabs to pick from when spawning formation. Can be empty; a Bullet-compatible Enemy component will be added.")]
+    public static LevelManager Instance { get; private set; }
+
+    [Header("================================")]
+    [Header("ENEMY PREFABS")]
+    [Header("================================")]
+
     [SerializeField] private GameObject[] enemyPrefabs;
-    [Tooltip("Boss prefab spawned at the end of each level.")]
     [SerializeField] private GameObject bossPrefab;
 
-    [Header("Formation (base)")]
+    [Header("================================")]
+    [Header("NORMAL ENEMY STATS")]
+    [Header("================================")]
+
+    [SerializeField] private float normalEnemyHealth = 10f;
+
+    [SerializeField] private float normalEnemyBulletDamage = 1f;
+    [SerializeField] private float normalEnemyBulletSpeed = 5f;
+    [SerializeField] private float normalEnemyBulletRange = 15f;
+
+    [SerializeField] private float normalEnemyMinShootDelay = 1.5f;
+    [SerializeField] private float normalEnemyMaxShootDelay = 4f;
+
+    [Header("================================")]
+    [Header("BOSS STATS")]
+    [Header("================================")]
+
+    [SerializeField] private float bossHealth = 50f;
+
+    [SerializeField] private float bossMovementSpeed = 3f;
+
+    [SerializeField] private float bossBulletDamage = 2f;
+    [SerializeField] private float bossBulletSpeed = 6f;
+    [SerializeField] private float bossBulletRange = 20f;
+
+    [SerializeField] private float bossMinShootDelay = 0.75f;
+    [SerializeField] private float bossMaxShootDelay = 2f;
+
+    // New boss bullet and special projectile prefabs
+    [SerializeField] private GameObject bossBulletPrefab;
+    [SerializeField] private GameObject bossSpecialProjectilePrefab;
+
+    // Special projectile parameters (can be tuned in inspector)
+    [SerializeField] private int bossSpecialSpawnCount = 3;
+    [SerializeField] private float bossSpecialProjectileSpeed = 4f;
+    [SerializeField] private float bossSpecialProjectileDamage = 0f; // damage of special projectile itself (optional)
+    [SerializeField] private float bossSpecialProjectileRange = 30f;
+    [SerializeField] private float bossSpecialMinDelay = 6f;
+    [SerializeField] private float bossSpecialMaxDelay = 12f;
+
+    [Header("================================")]
+    [Header("FORMATION")]
+    [Header("================================")]
+
     [SerializeField] private int baseRows = 3;
     [SerializeField] private int baseCols = 6;
-    [SerializeField] private Vector2 startPosition = new Vector2(-6f, 4f);
+
+    [SerializeField]
+    private Vector2 startPosition =
+        new Vector2(-6f, 4f);
+
     [SerializeField] private float horizontalSpacing = 1.6f;
     [SerializeField] private float verticalSpacing = 1.1f;
 
-    [Header("Movement")]
-    [SerializeField] private float moveSpeed = 1.5f;
+    [Header("================================")]
+    [Header("FORMATION MOVEMENT")]
+    [Header("================================")]
+
+    [SerializeField] private float normalMovementSpeed = 1.5f;
+
     [SerializeField] private float leftBound = -7.5f;
     [SerializeField] private float rightBound = 7.5f;
+
     [SerializeField] private float descentAmount = 0.6f;
 
-    [Header("Level scaling")]
-    [Tooltip("Percent more enemies per level (0.1 = 10%)")]
-    [SerializeField] private float enemyCountIncreasePercent = 0.1f;
-    [Tooltip("Percent more health per level (0.1 = 10%)")]
-    [SerializeField] private float enemyHealthIncreasePercent = 0.1f;
-    [SerializeField] private float baseEnemyHealth = 10f;
+    [Header("================================")]
+    [Header("LEVEL SCALING")]
+    [Header("================================")]
 
-    [Header("General")]
-    [Tooltip("Parent transform for spawned formations. If null the manager creates a container GameObject.")]
+    [SerializeField] private float enemyCountIncreasePercent = 0.1f;
+    [SerializeField] private float enemyHealthIncreasePercent = 0.1f;
+
+    [SerializeField] private float bossHealthIncreasePercent = 0.1f;
+
+    [SerializeField] private float enemyMovementSpeedIncreasePercent = 0.05f;
+    [SerializeField] private float enemyBulletDamageIncreasePercent = 0.05f;
+    [SerializeField] private float enemyFireRateIncreasePercent = 0.05f;
+
+    [SerializeField] private float bossMovementSpeedIncreasePercent = 0.05f;
+    [SerializeField] private float bossBulletDamageIncreasePercent = 0.05f;
+    [SerializeField] private float bossFireRateIncreasePercent = 0.05f;
+
+    [Header("================================")]
+    [Header("GENERAL")]
+    [Header("================================")]
+
     [SerializeField] private Transform formationParent;
 
-    [Tooltip("Start level index (1 = first level)")]
+    [SerializeField] private GameObject enemyBulletPrefab;
+
     [SerializeField] private int startingLevel = 1;
 
-    private int _currentLevel;
-    private GameObject _formationContainer;
-    private int _direction = 1;
-    private List<Enemy> _activeEnemies = new List<Enemy>();
-    private bool _bossAlive;
+    private int currentLevel;
+
+    private Transform formationContainer;
+
+    private int direction = 1;
+
+    private readonly List<Enemy> activeEnemies = new List<Enemy>();
+
+    private Enemy currentBoss;
+
+    private bool bossAlive;
+
+    // Effective values computed per level
+    private float effectiveNormalMovementSpeed;
+    private float effectiveNormalEnemyBulletDamage;
+    private float effectiveNormalEnemyBulletSpeed;
+    private float effectiveNormalEnemyBulletRange;
+    private float effectiveNormalEnemyMinShootDelay;
+    private float effectiveNormalEnemyMaxShootDelay;
+    private float effectiveNormalEnemyHealth;
+
+    private float currentBossHealth;
+    private float currentBossMovementSpeed;
+    private float currentBossBulletDamage;
+    private float currentBossBulletSpeed;
+    private float currentBossBulletRange;
+    private float currentBossMinShootDelay;
+    private float currentBossMaxShootDelay;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void OnEnable()
     {
@@ -59,27 +150,60 @@ public class LevelManager : MonoBehaviour
 
     private void Start()
     {
-        _currentLevel = Mathf.Max(1, startingLevel);
+        currentLevel = Mathf.Max(1, startingLevel);
         StartLevel();
     }
 
     private void Update()
     {
-        if (_formationContainer == null) return;
+        if (formationContainer == null)
+            return;
 
-        // move formation horizontally
-        var dt = Time.deltaTime;
-        _formationContainer.transform.position += Vector3.right * _direction * moveSpeed * dt;
+        MoveFormation();
+    }
 
-        // check bounds based on container extents
-        var left = GetFormationLeft();
-        var right = GetFormationRight();
+    private void ApplyLevelConfigScaling()
+    {
+        effectiveNormalMovementSpeed = normalMovementSpeed * (1f + (currentLevel - 1) * enemyMovementSpeedIncreasePercent);
 
-        if (right >= rightBound && _direction > 0)
+        effectiveNormalEnemyBulletDamage = normalEnemyBulletDamage * (1f + (currentLevel - 1) * enemyBulletDamageIncreasePercent);
+        effectiveNormalEnemyBulletSpeed = normalEnemyBulletSpeed;
+        effectiveNormalEnemyBulletRange = normalEnemyBulletRange;
+
+        float fireRateScaleEnemy = 1f + (currentLevel - 1) * enemyFireRateIncreasePercent;
+        effectiveNormalEnemyMinShootDelay = Mathf.Max(0.05f, normalEnemyMinShootDelay / fireRateScaleEnemy);
+        effectiveNormalEnemyMaxShootDelay = Mathf.Max(0.05f, normalEnemyMaxShootDelay / fireRateScaleEnemy);
+
+        float bossFireRateScale = 1f + (currentLevel - 1) * bossFireRateIncreasePercent;
+        currentBossBulletDamage = bossBulletDamage * (1f + (currentLevel - 1) * bossBulletDamageIncreasePercent);
+        currentBossBulletSpeed = bossBulletSpeed;
+        currentBossBulletRange = bossBulletRange;
+        currentBossMinShootDelay = Mathf.Max(0.05f, bossMinShootDelay / bossFireRateScale);
+        currentBossMaxShootDelay = Mathf.Max(0.05f, bossMaxShootDelay / bossFireRateScale);
+
+        currentBossMovementSpeed = bossMovementSpeed * (1f + (currentLevel - 1) * bossMovementSpeedIncreasePercent);
+
+        float healthMultiplier = 1f + (currentLevel - 1) * enemyHealthIncreasePercent;
+        effectiveNormalEnemyHealth = normalEnemyHealth * healthMultiplier;
+
+        currentBossHealth = bossHealth * (1f + (currentLevel - 1) * bossHealthIncreasePercent);
+    }
+
+    // ============================================
+    // FORMATION MOVEMENT
+    // ============================================
+    private void MoveFormation()
+    {
+        formationContainer.position += Vector3.right * direction * effectiveNormalMovementSpeed * Time.deltaTime;
+
+        float left = GetFormationLeft();
+        float right = GetFormationRight();
+
+        if (direction > 0 && right >= rightBound)
         {
             StepDownAndReverse();
         }
-        else if (left <= leftBound && _direction < 0)
+        else if (direction < 0 && left <= leftBound)
         {
             StepDownAndReverse();
         }
@@ -87,156 +211,269 @@ public class LevelManager : MonoBehaviour
 
     private float GetFormationLeft()
     {
-        return _formationContainer.transform.position.x;
+        float left = float.MaxValue;
+
+        foreach (Transform child in formationContainer)
+        {
+            left = Mathf.Min(left, child.position.x);
+        }
+
+        return left;
     }
 
     private float GetFormationRight()
     {
-        // approximate width using baseCols and spacing
-        var width = (baseCols - 1) * horizontalSpacing;
-        return _formationContainer.transform.position.x + width;
+        float right = float.MinValue;
+
+        foreach (Transform child in formationContainer)
+        {
+            right = Mathf.Max(right, child.position.x);
+        }
+
+        return right;
     }
 
     private void StepDownAndReverse()
     {
-        _direction *= -1;
-        _formationContainer.transform.position += Vector3.down * descentAmount;
+        direction *= -1;
+        formationContainer.position += Vector3.down * descentAmount;
     }
 
+    // ============================================
+    // START LEVEL
+    // ============================================
     private void StartLevel()
     {
-        _bossAlive = false;
+        bossAlive = false;
+        currentBoss = null;
+
         ClearExistingFormation();
 
-        // compute scaled enemy count
-        var baseCount = baseRows * baseCols;
-        var levelMultiplierCount = 1f + (_currentLevel - 1) * enemyCountIncreasePercent;
-        var totalToSpawn = Mathf.Max(1, Mathf.RoundToInt(baseCount * levelMultiplierCount));
+        ApplyLevelConfigScaling();
 
-        var cols = baseCols;
-        var rows = Mathf.CeilToInt((float)totalToSpawn / cols);
+        int baseCount = baseRows * baseCols;
 
-        // create container
-        _formationContainer = new GameObject($"Formation_Level_{_currentLevel}").transform.gameObject;
+        float countMultiplier = 1f + (currentLevel - 1) * enemyCountIncreasePercent;
+
+        int totalEnemies = Mathf.Max(1, Mathf.RoundToInt(baseCount * countMultiplier));
+
+        int cols = baseCols;
+
+        int rows = Mathf.CeilToInt((float)totalEnemies / cols);
+
+        GameObject formationObject = new GameObject("Formation_Level_" + currentLevel);
+
+        formationContainer = formationObject.transform;
+
         if (formationParent != null)
         {
-            _formationContainer.transform.SetParent(formationParent, false);
+            formationContainer.SetParent(formationParent, false);
         }
 
-        _formationContainer.transform.position = startPosition;
+        formationContainer.position = Vector3.zero;
 
-        // spawn grid, center formation around startPosition.x
-        var spawnIndex = 0;
-        for (int r = 0; r < rows; r++)
+        direction = 1;
+
+        int spawnIndex = 0;
+
+        for (int row = 0; row < rows; row++)
         {
-            for (int c = 0; c < cols; c++)
+            for (int col = 0; col < cols; col++)
             {
-                if (spawnIndex >= totalToSpawn) break;
+                if (spawnIndex >= totalEnemies)
+                    break;
 
-                var prefab = SelectEnemyPrefab(spawnIndex);
-                var pos = startPosition + new Vector2(c * horizontalSpacing, -r * verticalSpacing);
+                GameObject prefab = SelectEnemyPrefab(spawnIndex);
 
-                var go = Instantiate(prefab, pos, Quaternion.identity, _formationContainer.transform);
+                if (prefab == null)
+                    continue;
 
-                var enemy = go.GetComponent<Enemy>();
+                Vector3 position = new Vector3(startPosition.x + col * horizontalSpacing,
+                                               startPosition.y - row * verticalSpacing,
+                                               0f);
+
+                GameObject enemyObject = Instantiate(prefab, position, Quaternion.identity, formationContainer);
+
+                Enemy enemy = enemyObject.GetComponent<Enemy>();
                 if (enemy == null)
                 {
-                    enemy = go.AddComponent<Enemy>();
+                    enemy = enemyObject.AddComponent<Enemy>();
                 }
 
-                // apply scaled health
-                var levelHealthMultiplier = 1f + (_currentLevel - 1) * enemyHealthIncreasePercent;
-                enemy.InitializeHealth(baseEnemyHealth * levelHealthMultiplier);
+                ConfigureNormalEnemy(enemy);
+                activeEnemies.Add(enemy);
 
-                _activeEnemies.Add(enemy);
                 spawnIndex++;
             }
         }
+
+        Debug.Log("Level " + currentLevel + " gestart met " + totalEnemies + " enemies.");
     }
 
+    // ============================================
+    // NORMAL ENEMY CONFIGURATION
+    // ============================================
+    private void ConfigureNormalEnemy(Enemy enemy)
+    {
+        // Use effective health (scaled)
+        float finalHealth = effectiveNormalEnemyHealth;
+
+        enemy.InitializeHealth(finalHealth);
+
+        EnemyShooter shooter = enemy.GetComponent<EnemyShooter>();
+
+        if (shooter != null)
+        {
+            Transform firePoint = FindFirePoint(enemy.transform);
+
+            shooter.Configure(
+                enemyBulletPrefab,
+                firePoint,
+                effectiveNormalEnemyBulletSpeed,
+                effectiveNormalEnemyBulletDamage,
+                effectiveNormalEnemyBulletRange,
+                effectiveNormalEnemyMinShootDelay,
+                effectiveNormalEnemyMaxShootDelay
+            );
+        }
+    }
+
+    // ============================================
+    // BOSS
+    // ============================================
+    private void SpawnBoss()
+    {
+        if (bossPrefab == null)
+        {
+            NextLevel();
+            return;
+        }
+
+        bossAlive = true;
+
+        Vector3 spawnPosition = new Vector3((leftBound + rightBound) / 2f, startPosition.y, 0f);
+
+        GameObject bossObject = Instantiate(bossPrefab, spawnPosition, Quaternion.identity);
+
+        currentBoss = bossObject.GetComponent<Enemy>();
+        if (currentBoss == null)
+        {
+            currentBoss = bossObject.AddComponent<Enemy>();
+        }
+
+        currentBoss.InitializeHealth(currentBossHealth);
+
+        // Configure boss shooter (use bossBulletPrefab if set, otherwise fallback to enemyBulletPrefab)
+        EnemyShooter shooter = bossObject.GetComponent<EnemyShooter>();
+        GameObject bulletForBoss = bossBulletPrefab != null ? bossBulletPrefab : enemyBulletPrefab;
+
+        if (shooter != null)
+        {
+            Transform firePoint = FindFirePoint(bossObject.transform);
+
+            shooter.Configure(
+                bulletForBoss,
+                firePoint,
+                currentBossBulletSpeed,
+                currentBossBulletDamage,
+                currentBossBulletRange,
+                currentBossMinShootDelay,
+                currentBossMaxShootDelay
+            );
+        }
+
+        // Configure boss movement
+        BossMovement bossMovement = bossObject.GetComponent<BossMovement>();
+        if (bossMovement == null)
+        {
+            bossMovement = bossObject.AddComponent<BossMovement>();
+        }
+
+        bossMovement.Configure(currentBossMovementSpeed, leftBound, rightBound);
+
+    }
+
+    // ============================================
+    // ENEMY DESTROYED
+    // ============================================
+    private void HandleEnemyDestroyed(Enemy enemy)
+    {
+        if (enemy == currentBoss)
+        {
+            HandleBossDestroyed();
+            return;
+        }
+
+        if (activeEnemies.Contains(enemy))
+        {
+            activeEnemies.Remove(enemy);
+        }
+
+        if (activeEnemies.Count <= 0 && !bossAlive)
+        {
+            SpawnBoss();
+        }
+    }
+
+    private void HandleBossDestroyed()
+    {
+        if (!bossAlive)
+            return;
+
+        bossAlive = false;
+        currentBoss = null;
+
+        NextLevel();
+    }
+
+    // ============================================
+    // FIRE POINT
+    // ============================================
+    private Transform FindFirePoint(Transform enemy)
+    {
+        Transform firePoint = enemy.Find("FirePoint");
+
+        if (firePoint != null)
+            return firePoint;
+
+        return enemy;
+    }
+
+    // ============================================
+    // PREFAB SELECT
+    // ============================================
     private GameObject SelectEnemyPrefab(int index)
     {
         if (enemyPrefabs == null || enemyPrefabs.Length == 0)
         {
-            Debug.LogError("LevelManager: No enemyPrefabs assigned. Assign at least one enemy prefab in the Inspector.");
+            Debug.LogError("LevelManager: Geen enemy prefabs ingesteld!");
             return null;
         }
 
         return enemyPrefabs[index % enemyPrefabs.Length];
     }
 
+    // ============================================
+    // CLEAR
+    // ============================================
     private void ClearExistingFormation()
     {
-        _activeEnemies.Clear();
-        if (_formationContainer != null)
+        activeEnemies.Clear();
+
+        if (formationContainer != null)
         {
-            Destroy(_formationContainer);
-            _formationContainer = null;
+            Destroy(formationContainer.gameObject);
+            formationContainer = null;
         }
     }
 
-    private void HandleEnemyDestroyed(Enemy enemy)
-    {
-        if (_activeEnemies.Contains(enemy))
-        {
-            _activeEnemies.Remove(enemy);
-        }
-
-        // if no more regular enemies, spawn boss (if available) or progress immediately
-        if (_activeEnemies.Count == 0 && !_bossAlive)
-        {
-            if (bossPrefab != null)
-            {
-                SpawnBoss();
-            }
-            else
-            {
-                NextLevel();
-            }
-        }
-        else if (_activeEnemies.Count == 0 && _bossAlive == true)
-        {
-            // waiting for boss to die, do nothing
-        }
-    }
-
-    private void SpawnBoss()
-    {
-        _bossAlive = true;
-
-        // boss centered at top of screen (you can change position in inspector)
-        var spawnPos = new Vector3((leftBound + rightBound) / 2f, startPosition.y, 0f);
-        var bossGO = Instantiate(bossPrefab, spawnPos, Quaternion.identity);
-
-        var bossEnemy = bossGO.GetComponent<Enemy>();
-        if (bossEnemy == null)
-        {
-            bossEnemy = bossGO.AddComponent<Enemy>();
-        }
-
-        // boss gets amplified health (example: 2x base * level multiplier)
-        var levelHealthMultiplier = 1f + (_currentLevel - 1) * enemyHealthIncreasePercent;
-        bossEnemy.InitializeHealth(baseEnemyHealth * 5f * levelHealthMultiplier);
-
-        // subscribe separately so we can detect boss death
-        Enemy.OnEnemyDestroyed += HandleBossDestroyed;
-    }
-
-    private void HandleBossDestroyed(Enemy boss)
-    {
-        // boss death handler only; ignore if boss was a normal enemy
-        if (!_bossAlive) return;
-
-        // unsubscribe this handler
-        Enemy.OnEnemyDestroyed -= HandleBossDestroyed;
-
-        _bossAlive = false;
-        NextLevel();
-    }
-
+    // ============================================
+    // NEXT LEVEL
+    // ============================================
     private void NextLevel()
     {
-        _currentLevel++;
+        currentLevel++;
+        Debug.Log("Level " + currentLevel + " begint!");
         StartLevel();
     }
 }

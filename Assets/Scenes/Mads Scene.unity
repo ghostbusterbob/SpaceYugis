@@ -289,19 +289,33 @@ MonoBehaviour:
   enemyPrefabs:
   - {fileID: 950098319105781091, guid: ec41bda2215fb9c4399c7a4f14569b46, type: 3}
   bossPrefab: {fileID: 7044617970457361612, guid: 6622f82a962f8654cbe4110c31aeeca6, type: 3}
+  normalEnemyHealth: 10
+  normalEnemyBulletDamage: 1
+  normalEnemyBulletSpeed: 5
+  normalEnemyBulletRange: 15
+  normalEnemyMinShootDelay: 1.5
+  normalEnemyMaxShootDelay: 4
+  bossHealth: 50
+  bossMovementSpeed: 3
+  bossBulletDamage: 2
+  bossBulletSpeed: 6
+  bossBulletRange: 20
+  bossMinShootDelay: 0.75
+  bossMaxShootDelay: 2
   baseRows: 3
   baseCols: 6
   startPosition: {x: -6, y: 4}
   horizontalSpacing: 1.6
   verticalSpacing: 1.1
-  moveSpeed: 1.5
+  normalMovementSpeed: 1.5
   leftBound: -7.5
   rightBound: 7.5
   descentAmount: 0.6
   enemyCountIncreasePercent: 0.1
   enemyHealthIncreasePercent: 0.1
-  baseEnemyHealth: 10
-  formationParent: {fileID: 2007647307}
+  bossHealthIncreasePercent: 0.1
+  formationParent: {fileID: 0}
+  enemyBulletPrefab: {fileID: 0}
   startingLevel: 1
 --- !u!114 &301477455
 MonoBehaviour:
@@ -519,6 +533,64 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &619946143
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 619946145}
+  - component: {fileID: 619946144}
+  m_Layer: 0
+  m_Name: BattleShipManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &619946144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 619946143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00b82e435eb8ec84aa72603a5552db3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Battleship
+  player1: {fileID: 1464343501}
+  player1FirePoint: {fileID: 1561047934}
+  player2: {fileID: 1275133671}
+  player2FirePoint: {fileID: 304010975}
+  moveSpeed: 7
+  leftLimit: -7.5
+  rightLimit: 7.5
+  bulletPrefab: {fileID: 2579992567038757543, guid: 40ead5a59cc96d1408a3b71ad37ef604, type: 3}
+  fireCooldown: 0.25
+  bulletSpeed: 12
+  bulletDamage: 1
+  bulletRange: 15
+--- !u!4 &619946145
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 619946143}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.39459, y: -0.00585, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1464343501}
+  - {fileID: 1275133671}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1275133667
 GameObject:
   m_ObjectHideFlags: 0
@@ -529,46 +601,15 @@ GameObject:
   m_Component:
   - component: {fileID: 1275133671}
   - component: {fileID: 1275133670}
-  - component: {fileID: 1275133669}
-  - component: {fileID: 1275133668}
+  - component: {fileID: 1275133672}
+  - component: {fileID: 1275133673}
   m_Layer: 0
   m_Name: SpaceYugi's - BattleShip Player 2
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1275133668
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1275133667}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74daa81e341bee54a88bf47aedc77fdb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BattleshipShooter
-  bulletPrefab: {fileID: 2579992567038757543, guid: 40ead5a59cc96d1408a3b71ad37ef604, type: 3}
-  firePoint: {fileID: 1275133671}
-  bulletRange: 1000
-  damage: 10
-  fireRate: 4
-  inputSelector: 1
---- !u!114 &1275133669
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1275133667}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b8191cbcb215d84e8dc4d9dec6fc059, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Player2Movement
-  speed: 5
 --- !u!212 &1275133670
 SpriteRenderer:
   serializedVersion: 2
@@ -636,14 +677,73 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1275133667}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.72, y: -2.47, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.32541, y: -2.46415, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 304010975}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 619946145}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!61 &1275133672
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1275133667}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 0.16, y: 0.16}
+    newSize: {x: 0.16, y: 0.16}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.16, y: 0.16}
+  m_EdgeRadius: 0
+--- !u!114 &1275133673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1275133667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29473cffd3a214449afd03e63b194da3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  maxLives: 10
 --- !u!1 &1464343498
 GameObject:
   m_ObjectHideFlags: 0
@@ -654,11 +754,11 @@ GameObject:
   m_Component:
   - component: {fileID: 1464343501}
   - component: {fileID: 1464343500}
-  - component: {fileID: 1464343503}
-  - component: {fileID: 1464343502}
+  - component: {fileID: 1464343504}
+  - component: {fileID: 1464343505}
   m_Layer: 0
   m_Name: SpaceYugi's - BattleShip Player 1
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -730,15 +830,61 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1464343498}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.62, y: -2.47, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -3.01459, y: -2.46415, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1561047934}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 619946145}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1464343502
+--- !u!61 &1464343504
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1464343498}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 0.16, y: 0.16}
+    newSize: {x: 0.16, y: 0.16}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.16, y: 0.16}
+  m_EdgeRadius: 0
+--- !u!114 &1464343505
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -747,28 +893,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1464343498}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74daa81e341bee54a88bf47aedc77fdb, type: 3}
+  m_Script: {fileID: 11500000, guid: 29473cffd3a214449afd03e63b194da3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BattleshipShooter
-  bulletPrefab: {fileID: 2579992567038757543, guid: 40ead5a59cc96d1408a3b71ad37ef604, type: 3}
-  firePoint: {fileID: 1464343501}
-  bulletRange: 50
-  damage: 10
-  fireRate: 3
-  inputSelector: 0
---- !u!114 &1464343503
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1464343498}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 853a304f366f67d40872e9452c2924a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  speed: 5
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  maxLives: 10
 --- !u!1 &1561047933
 GameObject:
   m_ObjectHideFlags: 0
@@ -897,6 +1025,5 @@ SceneRoots:
   m_Roots:
   - {fileID: 243682429}
   - {fileID: 564542414}
-  - {fileID: 1464343501}
-  - {fileID: 1275133671}
   - {fileID: 301477456}
+  - {fileID: 619946145}
