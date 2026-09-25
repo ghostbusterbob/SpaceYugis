@@ -11,6 +11,8 @@ public class Bullet : MonoBehaviour
     private Vector3 startPosition;
 
     public float Damage => damage;
+    public int OwnerPlayer { get; set; }
+    public float ExplosionRadius { get; set; }
 
     private void Start()
     {
@@ -60,9 +62,29 @@ public class Bullet : MonoBehaviour
         if (enemy == null)
             return;
 
-        enemy.TakeDamage(damage);
+        if (ExplosionRadius > 0f)
+            Explode(enemy.transform.position);
+        else
+            enemy.TakeDamage(damage, OwnerPlayer);
 
         Destroy(gameObject);
+    }
+
+    private void Explode(Vector3 position)
+    {
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(position, ExplosionRadius);
+        System.Collections.Generic.HashSet<Enemy> damagedEnemies =
+            new System.Collections.Generic.HashSet<Enemy>();
+        foreach (Collider2D hit in colliders)
+        {
+            Enemy hitEnemy = hit.GetComponent<Enemy>();
+            if (hitEnemy == null)
+                hitEnemy = hit.GetComponentInParent<Enemy>();
+            if (hitEnemy != null && damagedEnemies.Add(hitEnemy))
+                hitEnemy.TakeDamage(damage, OwnerPlayer);
+        }
+
+        GameFlow.Instance?.ExplosiveBulletImpact(position, ExplosionRadius);
     }
 
     public void SetVelocity(Vector2 velocity)

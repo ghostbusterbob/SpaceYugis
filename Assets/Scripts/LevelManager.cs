@@ -40,6 +40,16 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private float bossMinShootDelay = 0.75f;
     [SerializeField] private float bossMaxShootDelay = 2f;
 
+    [Header("BOSS DASH")]
+    [Tooltip("Dash chance on wave 1, in percent per dash check.")]
+    [Range(0f, 100f)] [SerializeField] private float bossDashStartingChance = 5f;
+    [Tooltip("Extra dash chance added for every new wave.")]
+    [Min(0f)] [SerializeField] private float bossDashChanceIncreasePerWave = 2.5f;
+    [Range(0f, 100f)] [SerializeField] private float bossDashMaximumChance = 100f;
+    [Min(1f)] [SerializeField] private float bossDashSpeed = 22f;
+    [Min(0.1f)] [SerializeField] private float bossDashCheckInterval = 1.25f;
+    [Min(0f)] [SerializeField] private float bossDashCooldown = 2.5f;
+
     // New boss bullet and special projectile prefabs
     [SerializeField] private GameObject bossBulletPrefab;
     [SerializeField] private GameObject bossSpecialProjectilePrefab;
@@ -82,7 +92,6 @@ public class LevelManager : MonoBehaviour
     [Header("================================")]
 
     [SerializeField] private float enemyCountIncreasePercent = 0.1f;
-    [SerializeField] private float enemyHealthIncreasePercent = 0.1f;
 
     [SerializeField] private float bossHealthIncreasePercent = 0.1f;
 
@@ -183,8 +192,9 @@ public class LevelManager : MonoBehaviour
 
         currentBossMovementSpeed = bossMovementSpeed * (1f + (currentLevel - 1) * bossMovementSpeedIncreasePercent);
 
-        float healthMultiplier = 1f + (currentLevel - 1) * enemyHealthIncreasePercent;
-        effectiveNormalEnemyHealth = normalEnemyHealth * healthMultiplier;
+        // Kleine enemies houden op elk level dezelfde health, zodat ze met de
+        // standaard bullet damage altijd een one-shot blijven.
+        effectiveNormalEnemyHealth = normalEnemyHealth;
 
         currentBossHealth = bossHealth * (1f + (currentLevel - 1) * bossHealthIncreasePercent);
     }
@@ -389,7 +399,10 @@ public class LevelManager : MonoBehaviour
             bossMovement = bossObject.AddComponent<BossMovement>();
         }
 
-        bossMovement.Configure(currentBossMovementSpeed, leftBound, rightBound);
+        float dashChance = Mathf.Min(bossDashMaximumChance,
+            bossDashStartingChance + (currentLevel - 1) * bossDashChanceIncreasePerWave);
+        bossMovement.Configure(currentBossMovementSpeed, leftBound, rightBound,
+            dashChance, bossDashSpeed, bossDashCheckInterval, bossDashCooldown);
 
     }
 

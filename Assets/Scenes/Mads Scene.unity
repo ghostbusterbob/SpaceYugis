@@ -119,6 +119,37 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &146970811
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 146970812}
+  m_Layer: 0
+  m_Name: Spawnpoint 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &146970812
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 146970811}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6.17, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 483318746}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &243682425
 GameObject:
   m_ObjectHideFlags: 0
@@ -301,6 +332,12 @@ MonoBehaviour:
   bossBulletRange: 20
   bossMinShootDelay: 1
   bossMaxShootDelay: 3
+  bossDashStartingChance: 5
+  bossDashChanceIncreasePerWave: 2.5
+  bossDashMaximumChance: 100
+  bossDashSpeed: 22
+  bossDashCheckInterval: 1.25
+  bossDashCooldown: 2.5
   bossBulletPrefab: {fileID: 8511750482830172382, guid: d072c02c67abc7f46aa8e9e79037c984, type: 3}
   bossSpecialProjectilePrefab: {fileID: 0}
   bossSpecialSpawnCount: 3
@@ -319,7 +356,6 @@ MonoBehaviour:
   rightBound: 7.5
   descentAmount: 0.6
   enemyCountIncreasePercent: 0.1
-  enemyHealthIncreasePercent: 0.15
   bossHealthIncreasePercent: 0.2
   enemyMovementSpeedIncreasePercent: 0.05
   enemyBulletDamageIncreasePercent: 0
@@ -437,6 +473,133 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &483318741
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 483318746}
+  - component: {fileID: 483318745}
+  - component: {fileID: 483318744}
+  - component: {fileID: 483318743}
+  m_Layer: 0
+  m_Name: MeteorSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!50 &483318743
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483318741}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
+--- !u!58 &483318744
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483318741}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
+--- !u!114 &483318745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483318741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbda67bc862e35a4d94e48d5fea93b83, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MeteorSpawner
+  meteorPrefab: {fileID: 430211695459451681, guid: 6e8ce21836e687e4b945af2c58c66c7b, type: 3}
+  spawnInterval: 10
+  chanceNumerator: 1
+  chanceDenominator: 3
+  spawnPoints:
+  - {fileID: 146970812}
+  - {fileID: 1415670835}
+  - {fileID: 890293346}
+  - {fileID: 1010630347}
+  - {fileID: 2041902218}
+  fallbackSpawnY: 10
+  fallbackSpawnXRange: {x: -8, y: 8}
+  meteorLifetime: 30
+--- !u!4 &483318746
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483318741}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.37082, y: -0.10226, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 146970812}
+  - {fileID: 1415670835}
+  - {fileID: 890293346}
+  - {fileID: 1010630347}
+  - {fileID: 2041902218}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &564542412
 GameObject:
   m_ObjectHideFlags: 0
@@ -605,6 +768,15 @@ MonoBehaviour:
   bulletSpeed: 10
   bulletDamage: 1
   bulletRange: 15
+  companionScale: 0.58
+  companionFirstSideDistance: 1.35
+  companionExtraSpacing: 0.78
+  companionVerticalOffset: 0.12
+  companionFireCooldown: 0.7
+  companionFollowSpeed: 10
+  companionStartingLives: 2
+  explosionRadiusPerOrangeOrb: 0.75
+  maximumExplosionRadius: 4
 --- !u!4 &619946145
 Transform:
   m_ObjectHideFlags: 0
@@ -621,6 +793,122 @@ Transform:
   - {fileID: 1464343501}
   - {fileID: 1275133671}
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &619946146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11e09c3dfbc14aa088b9d31fb9c27df0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameFlow
+  battleship: {fileID: 619946144}
+  levels: {fileID: 301477454}
+  meteors: {fileID: 483318745}
+  player1: {fileID: 1464343505}
+  player2: {fileID: 1275133673}
+  arcadeFont: {fileID: 12800000, guid: a623866ce90f423392de935ab594b98a, type: 3}
+  minimumPowerUpInterval: 7
+  maximumPowerUpInterval: 13
+  orbSpawnXRange: {x: -6.8, y: 6.8}
+  orbSpawnAboveScreen: 0.5
+  orbFallSpeedRange: {x: 1.4, y: 2.2}
+  blueOrbSpeed: 1
+  redOrbSpeed: 1
+  greenOrbSpeed: 1
+  yellowOrbSpeed: 1
+  galaxyOrbSpeed: 1
+  orangeOrbSpeed: 1
+  whiteOrbSpeed: 1
+  rainbowOrbSpeed: 1.15
+  reviveOrbSpeed: 2.25
+  normalOrbRotationSpeed: 100
+  rainbowColourCycleSpeed: 0.45
+  reviveHorizontalSpeed: 4.5
+  reviveWeaveFrequency: 8
+  reviveRotationSpeed: 620
+  reviveBlinkSpeed: 18
+  blueSpeedChance: 30
+  redFireRateChance: 25
+  greenLifeChance: 20
+  yellowCompanionChance: 20
+  darkGreenReviveChance: 1
+  galaxyOrbChance: 1
+  orangeExplosiveChance: 2
+  whiteShieldChance: 5
+  rainbowChance: 5
+  galaxy2xWeight: 60
+  galaxy3xWeight: 20
+  galaxy5xWeight: 10
+  galaxyMultiplierDuration: 30
+  menuMusicVolume: 0.2
+  gameplayMusicVolume: 0.16
+  soundEffectsVolume: 1
+--- !u!1 &890293345
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 890293346}
+  m_Layer: 0
+  m_Name: Spawnpoint 3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &890293346
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890293345}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 11.58, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 483318746}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1010630346
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1010630347}
+  m_Layer: 0
+  m_Name: Spawnpoint 4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1010630347
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010630346}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 7.2, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 483318746}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1275133667
 GameObject:
@@ -709,7 +997,7 @@ Transform:
   m_GameObject: {fileID: 1275133667}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.32541, y: -2.46415, z: 0}
+  m_LocalPosition: {x: 2.8, y: -2.46415, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -774,8 +1062,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29473cffd3a214449afd03e63b194da3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
-  maxLives: 5
-  playerNumber: 1
+  maxLives: 3
+  playerNumber: 2
+  reviveInvulnerabilitySeconds: 2
+--- !u!1 &1415670834
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1415670835}
+  m_Layer: 0
+  m_Name: 'Spawnpoint 2 '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1415670835
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1415670834}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.33, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 483318746}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1464343498
 GameObject:
   m_ObjectHideFlags: 0
@@ -863,7 +1183,7 @@ Transform:
   m_GameObject: {fileID: 1464343498}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.01459, y: -2.46415, z: 0}
+  m_LocalPosition: {x: -4.63, y: -2.46415, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -928,8 +1248,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29473cffd3a214449afd03e63b194da3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
-  maxLives: 5
+  maxLives: 3
   playerNumber: 1
+  reviveInvulnerabilitySeconds: 2
 --- !u!1 &1561047933
 GameObject:
   m_ObjectHideFlags: 0
@@ -1052,6 +1373,125 @@ Transform:
   m_Children: []
   m_Father: {fileID: 301477456}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2041902217
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2041902218}
+  m_Layer: 0
+  m_Name: Spawnpoint 5
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2041902218
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2041902217}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.59, y: 5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 483318746}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2100000100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2100000101}
+  - component: {fileID: 619946146}
+  m_Layer: 0
+  m_Name: GAME SETTINGS - ORBS UI AUDIO
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2100000101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2100000110
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2100000111}
+  - component: {fileID: 2100000112}
+  m_Layer: 0
+  m_Name: BACKGROUND SETTINGS
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2100000111
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000110}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2100000112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec334977b1fc4890a75aa0038f357b64, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SpaceBackground
+  sceneCamera: {fileID: 243682428}
+  starCount: 85
+  planetCount: 3
+  planetFloatDistance: 0.18
+  baseHue: 0.61
+  hueShiftAmount: 0.055
+  colourChangeSpeed: 0.055
+  backgroundBrightness: 0.075
+  nebulaOpacity: 0.11
+  starDriftDistance: {x: 0.22, y: 0.14}
+  starDriftSpeed: {x: 0.08, y: 0.065}
+  nebulaDriftDistance: {x: 1.15, y: 0.7}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1060,3 +1500,6 @@ SceneRoots:
   - {fileID: 564542414}
   - {fileID: 301477456}
   - {fileID: 619946145}
+  - {fileID: 483318746}
+  - {fileID: 2100000101}
+  - {fileID: 2100000111}

@@ -47,6 +47,14 @@ public class EnemyBullet : MonoBehaviour
         if (!other.CompareTag("Player"))
             return;
 
+        CompanionShip companion = other.GetComponentInParent<CompanionShip>();
+        if (companion != null)
+        {
+            companion.TakeHit();
+            Destroy(gameObject);
+            return;
+        }
+
         PlayerHealth player =
             other.GetComponent<PlayerHealth>();
 

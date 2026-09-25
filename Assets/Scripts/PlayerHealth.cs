@@ -1,90 +1,184 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
 {
-    [Header("Health")]
     [SerializeField] private int maxLives = 3;
-
-    [Header("Player")]
     [SerializeField] private int playerNumber = 1;
+    [Header("REVIVE")]
+    [Min(0f)] [SerializeField] private float reviveInvulnerabilitySeconds = 2f;
 
-    private int currentLives;
+    public event Action<PlayerHealth, int> LivesChanged;
+    public int CurrentLives { get; private set; }
+    public int MaxLives => maxLives;
+    public int PlayerNumber => playerNumber;
+    public bool IsDead => CurrentLives <= 0;
+    public Sprite LifeSprite => sprite != null ? sprite.sprite : null;
+    public Color ShipColor => normalColor;
+    public int ShieldHits { get; private set; }
+    public bool IsInvulnerable => Time.unscaledTime < invulnerableUntil;
 
-    public int CurrentLives => currentLives;
-    public bool IsDead => currentLives <= 0;
-
-    private static PlayerHealth player1;
-    private static PlayerHealth player2;
+    private SpriteRenderer sprite;
+    private Color normalColor;
+    private Coroutine flashRoutine;
+    private Coroutine hideRoutine;
+    private LineRenderer shieldRing;
+    private float invulnerableUntil;
 
     private void Awake()
     {
-        if (playerNumber == 1)
-        {
-            player1 = this;
-        }
-        else if (playerNumber == 2)
-        {
-            player2 = this;
-        }
-    }
-
-    private void Start()
-    {
-        currentLives = maxLives;
+        CurrentLives = Mathf.Max(1, maxLives);
+        sprite = GetComponent<SpriteRenderer>();
+        if (sprite != null) normalColor = sprite.color;
     }
 
     public void TakeDamage(float damage)
     {
+        if (IsDead || damage <= 0f || IsInvulnerable) return;
+
+        if (ShieldHits > 0)
+        {
+            ShieldHits--;
+            UpdateShieldRing();
+            GameFlow.Instance?.PlayHit();
+            return;
+        }
+
+        int lost = Mathf.Min(CurrentLives, Mathf.Max(1, Mathf.RoundToInt(damage)));
+        CurrentLives -= lost;
+        LivesChanged?.Invoke(this, lost);
+        GameFlow.Instance?.PlayHit();
+
+        if (flashRoutine != null) StopCoroutine(flashRoutine);
+        flashRoutine = StartCoroutine(FlashRed());
+
+        if (IsDead)
+        {
+            if (shieldRing != null) shieldRing.enabled = false;
+            foreach (Collider2D collider in GetComponentsInChildren<Collider2D>())
+                collider.enabled = false;
+            hideRoutine = StartCoroutine(HideAfterFlash());
+            GameFlow.Instance?.PlayerDied();
+        }
+    }
+
+    public void AddLife()
+    {
         if (IsDead)
             return;
 
-        int damageAmount =
-            Mathf.Max(1, Mathf.RoundToInt(damage));
-
-        currentLives -= damageAmount;
-
-        Debug.Log(
-            "Player " +
-            playerNumber +
-            " geraakt! Lives over: " +
-            currentLives
-        );
-
-        if (currentLives <= 0)
-        {
-            Die();
-        }
+        CurrentLives++;
+        maxLives = Mathf.Max(maxLives, CurrentLives);
+        LivesChanged?.Invoke(this, -1);
     }
 
-    private void Die()
+    public void AddShieldHit()
     {
-        Destroy(gameObject);
-        Debug.Log(
-            "Player " +
-            playerNumber +
-            " is dood!"
-        );
-
-        CheckGameOver();
-    }
-
-    private static void CheckGameOver()
-    {
-        // Wacht totdat beide spelers bestaan
-        if (player1 == null || player2 == null)
+        if (IsDead)
             return;
 
-        // Alleen Game Over als BEIDE spelers dood zijn
-        if (player1.IsDead && player2.IsDead)
+        ShieldHits++;
+        UpdateShieldRing();
+    }
+
+    private void UpdateShieldRing()
+    {
+        if (shieldRing == null && ShieldHits > 0)
+            CreateShieldRing();
+        if (shieldRing == null)
+            return;
+
+        shieldRing.enabled = ShieldHits > 0 && !IsDead;
+        shieldRing.widthMultiplier = 0.055f + Mathf.Min(ShieldHits - 1, 5) * 0.012f;
+    }
+
+    private void CreateShieldRing()
+    {
+        GameObject ringObject = new GameObject("White shield ring");
+        ringObject.transform.SetParent(transform, false);
+        shieldRing = ringObject.AddComponent<LineRenderer>();
+        shieldRing.useWorldSpace = false;
+        shieldRing.loop = true;
+        shieldRing.positionCount = 48;
+        shieldRing.startColor = Color.white;
+        shieldRing.endColor = Color.white;
+        shieldRing.sortingOrder = sprite != null ? sprite.sortingOrder + 3 : 25;
+        Shader shader = Shader.Find("Sprites/Default");
+        if (shader != null)
+            shieldRing.material = new Material(shader);
+        float radius = sprite != null && sprite.sprite != null
+            ? Mathf.Max(sprite.sprite.bounds.extents.x, sprite.sprite.bounds.extents.y) * 1.35f
+            : 0.72f;
+        for (int i = 0; i < shieldRing.positionCount; i++)
         {
-            GameOver();
+            float angle = i * Mathf.PI * 2f / shieldRing.positionCount;
+            shieldRing.SetPosition(i, new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * radius);
         }
     }
 
-    private static void GameOver()
+    public void Revive(int lives)
     {
-        Debug.Log("GAME OVER - Beide spelers zijn dood!");
+        if (!IsDead)
+            return;
 
-        Time.timeScale = 0f;
+        if (hideRoutine != null)
+        {
+            StopCoroutine(hideRoutine);
+            hideRoutine = null;
+        }
+        if (flashRoutine != null)
+        {
+            StopCoroutine(flashRoutine);
+            flashRoutine = null;
+        }
+        CurrentLives = Mathf.Max(1, lives);
+        maxLives = Mathf.Max(maxLives, CurrentLives);
+        invulnerableUntil = Time.unscaledTime + reviveInvulnerabilitySeconds;
+        foreach (Collider2D collider in GetComponentsInChildren<Collider2D>())
+            collider.enabled = true;
+        foreach (SpriteRenderer renderer in GetComponentsInChildren<SpriteRenderer>())
+            renderer.enabled = true;
+        if (sprite != null)
+            sprite.color = normalColor;
+        LivesChanged?.Invoke(this, -1);
+        flashRoutine = StartCoroutine(FlashReviveInvulnerability());
+    }
+
+    private IEnumerator FlashReviveInvulnerability()
+    {
+        if (sprite == null)
+            yield break;
+
+        bool dimmed = false;
+        while (IsInvulnerable)
+        {
+            dimmed = !dimmed;
+            sprite.color = dimmed
+                ? new Color(normalColor.r, normalColor.g, normalColor.b, 0.35f)
+                : normalColor;
+            yield return new WaitForSecondsRealtime(0.1f);
+        }
+        sprite.color = normalColor;
+        flashRoutine = null;
+    }
+
+    private IEnumerator FlashRed()
+    {
+        if (sprite == null) yield break;
+        for (int i = 0; i < 4; i++)
+        {
+            sprite.color = i % 2 == 0 ? Color.red : normalColor;
+            yield return new WaitForSecondsRealtime(0.12f);
+        }
+        sprite.color = normalColor;
+    }
+
+    private IEnumerator HideAfterFlash()
+    {
+        yield return new WaitForSecondsRealtime(0.48f);
+        foreach (SpriteRenderer renderer in GetComponentsInChildren<SpriteRenderer>())
+            renderer.enabled = false;
+        hideRoutine = null;
     }
 }

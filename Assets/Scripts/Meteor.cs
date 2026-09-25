@@ -20,13 +20,15 @@ public class Meteor : MonoBehaviour
     [SerializeField] private float horizontalDrift = 1.5f;
 
     private Rigidbody2D _rb2d;
+    private Vector2 fallVelocity;
+    private bool impacted;
 
     private void Reset()
     {
-        // Ensure CircleCollider2D exists and is not a trigger.
+        // A trigger prevents collisions from knocking or rotating the meteor.
         CircleCollider2D col = GetComponent<CircleCollider2D>();
         if (col == null) col = gameObject.AddComponent<CircleCollider2D>();
-        col.isTrigger = false;
+        col.isTrigger = true;
 
         // Ensure Rigidbody2D exists and set sensible defaults.
         Rigidbody2D rb2d = GetComponent<Rigidbody2D>();
@@ -35,9 +37,7 @@ public class Meteor : MonoBehaviour
             rb2d = gameObject.AddComponent<Rigidbody2D>();
         }
 
-        rb2d.bodyType = RigidbodyType2D.Dynamic;
-        rb2d.gravityScale = 0f;    // we control the fall vector directly for a straight diagonal path
-        rb2d.freezeRotation = false;
+        ConfigureBody(rb2d);
         _rb2d = rb2d;
     }
 
@@ -45,26 +45,42 @@ public class Meteor : MonoBehaviour
     {
         _rb2d = GetComponent<Rigidbody2D>();
         if (_rb2d == null)
-        {
             _rb2d = gameObject.AddComponent<Rigidbody2D>();
-            _rb2d.bodyType = RigidbodyType2D.Dynamic;
-            _rb2d.gravityScale = 0f;
-        }
+
+        ConfigureBody(_rb2d);
+        transform.rotation = Quaternion.identity;
     }
 
     private void Start()
     {
         // Give a slight random horizontal velocity so the meteor falls diagonally.
-        float hx = Random.Range(-horizontalDrift, horizontalDrift);
-        float vy = -Mathf.Abs(fallSpeed);
-        if (_rb2d != null)
-        {
-            _rb2d.linearVelocity = new Vector2(hx, vy);
-        }
+        fallVelocity = new Vector2(Random.Range(-horizontalDrift, horizontalDrift), -Mathf.Abs(fallSpeed));
+        transform.rotation = Quaternion.identity;
+    }
 
-        // Optionally rotate the sprite to point along travel direction (visual tweak)
-        float angle = Mathf.Atan2(vy, hx) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
+    private void FixedUpdate()
+    {
+        if (_rb2d == null || impacted)
+            return;
+
+        _rb2d.MovePosition(_rb2d.position + fallVelocity * Time.fixedDeltaTime);
+        _rb2d.SetRotation(0f);
+    }
+
+    private void LateUpdate()
+    {
+        // Keep the flame pointing upward regardless of the diagonal movement.
+        transform.rotation = Quaternion.identity;
+    }
+
+    private static void ConfigureBody(Rigidbody2D body)
+    {
+        body.bodyType = RigidbodyType2D.Kinematic;
+        body.gravityScale = 0f;
+        body.linearVelocity = Vector2.zero;
+        body.angularVelocity = 0f;
+        body.freezeRotation = true;
+        body.interpolation = RigidbodyInterpolation2D.Interpolate;
     }
 
     private void OnValidate()
@@ -75,22 +91,24 @@ public class Meteor : MonoBehaviour
         if (horizontalDrift < 0f) horizontalDrift = Mathf.Abs(horizontalDrift);
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (collision.collider != null && collision.collider.CompareTag(playerTag))
+        if (impacted || other == null || !other.CompareTag(playerTag))
+            return;
+
+        impacted = true;
+        CompanionShip companion = other.GetComponentInParent<CompanionShip>();
+        if (companion != null)
         {
-            GameObject playerObj = collision.collider.gameObject;
-
-            // Notify player script if it has a Die method.
-            playerObj.SendMessage("Die", SendMessageOptions.DontRequireReceiver);
-
-            if (destroyPlayerOnHit)
-            {
-                Destroy(playerObj);
-            }
+            companion.TakeHit();
+            Destroy(gameObject, destroyOnImpactDelay);
+            return;
         }
 
-        // Remove the meteor after impact to avoid multiple hits.
+        PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
+        if (health != null)
+            health.TakeDamage(health.CurrentLives);
+
         Destroy(gameObject, destroyOnImpactDelay);
     }
 }

@@ -8,6 +8,7 @@ TagManager:
   - EnemyBullet
   - EnemyBullets
   - Enemy
+  - Meteor
   layers:
   - Default
   - TransparentFX
