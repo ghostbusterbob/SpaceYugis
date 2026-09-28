@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer), typeof(CircleCollider2D))]
 public class PowerUpOrb : MonoBehaviour
 {
-    public enum Kind { Speed, FireRate, Life, Rainbow, Companion, Revive, Galaxy, Explosive, Shield }
+    public enum Kind { Speed, FireRate, Life, Rainbow, Companion, Revive, Galaxy, Explosive, Shield, Pierce }
 
     private static Sprite orbSprite;
     private Kind kind;
@@ -50,6 +50,8 @@ public class PowerUpOrb : MonoBehaviour
             renderer.color = new Color(1f, 0.34f, 0.03f);
         else if (type == Kind.Shield)
             renderer.color = Color.white;
+        else if (type == Kind.Pierce)
+            renderer.color = new Color(0.68f, 0.08f, 1f);
         renderer.sortingOrder = 8;
 
         if (type == Kind.Galaxy)

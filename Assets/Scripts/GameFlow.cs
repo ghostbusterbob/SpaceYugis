@@ -34,6 +34,7 @@ public class GameFlow : MonoBehaviour
     [Min(0.1f)] [SerializeField] private float galaxyOrbSpeed = 1f;
     [Min(0.1f)] [SerializeField] private float orangeOrbSpeed = 1f;
     [Min(0.1f)] [SerializeField] private float whiteOrbSpeed = 1f;
+    [Min(0.1f)] [SerializeField] private float purpleOrbSpeed = 1f;
     [Min(0.1f)] [SerializeField] private float rainbowOrbSpeed = 1.15f;
     [Min(0.1f)] [SerializeField] private float reviveOrbSpeed = 2.25f;
 
@@ -62,6 +63,8 @@ public class GameFlow : MonoBehaviour
     [Range(0f, 100f)] [SerializeField] private float orangeExplosiveChance = 2f;
     [Tooltip("White shield-orb spawn weight. Each pickup blocks one extra hit.")]
     [Range(0f, 100f)] [SerializeField] private float whiteShieldChance = 5f;
+    [Tooltip("Purple piercing-orb spawn weight. Each pickup adds one enemy pierce per bullet.")]
+    [Range(0f, 100f)] [SerializeField] private float purplePierceChance = 5f;
     [Tooltip("Rainbow all-perks orb chance.")]
     [Range(0f, 100f)] [SerializeField] private float rainbowChance = 3f;
 
@@ -98,6 +101,7 @@ public class GameFlow : MonoBehaviour
     private AudioClip shotSound;
     private AudioClip hitSound;
     private AudioClip explosionSound;
+    private AudioClip enemyDeathSound;
     private AudioClip enemyHitSound;
     private AudioClip pickupSound;
     private AudioClip menuMusic;
@@ -130,6 +134,7 @@ public class GameFlow : MonoBehaviour
         shotSound = MakeSound(0.09f, 780f, 450f, false);
         hitSound = MakeSound(0.22f, 290f, 90f, true);
         explosionSound = MakeSound(0.28f, 190f, 45f, true);
+        enemyDeathSound = MakeBloodSpatterSound();
         enemyHitSound = MakeSound(0.08f, 520f, 260f, true);
         pickupSound = MakeSound(0.18f, 480f, 960f, false);
         menuMusic = MakeMusic(true);
@@ -159,6 +164,7 @@ public class GameFlow : MonoBehaviour
         if (shotSound != null) Destroy(shotSound);
         if (hitSound != null) Destroy(hitSound);
         if (explosionSound != null) Destroy(explosionSound);
+        if (enemyDeathSound != null) Destroy(enemyDeathSound);
         if (enemyHitSound != null) Destroy(enemyHitSound);
         if (pickupSound != null) Destroy(pickupSound);
         if (menuMusic != null) Destroy(menuMusic);
@@ -229,6 +235,7 @@ public class GameFlow : MonoBehaviour
             case PowerUpOrb.Kind.Galaxy: return galaxyOrbSpeed;
             case PowerUpOrb.Kind.Explosive: return orangeOrbSpeed;
             case PowerUpOrb.Kind.Shield: return whiteOrbSpeed;
+            case PowerUpOrb.Kind.Pierce: return purpleOrbSpeed;
             case PowerUpOrb.Kind.Rainbow: return rainbowOrbSpeed;
             case PowerUpOrb.Kind.Revive: return reviveOrbSpeed;
             default: return 1f;
@@ -245,7 +252,7 @@ public class GameFlow : MonoBehaviour
 
         float reviveChance = CanSpawnReviveOrb() ? darkGreenReviveChance : 0f;
         float total = blueSpeedChance + redFireRateChance + greenLifeChance + yellowCompanionChance +
-                      reviveChance + whiteShieldChance + rainbowChance;
+                      reviveChance + whiteShieldChance + purplePierceChance + rainbowChance;
         if (total <= 0f)
             return PowerUpOrb.Kind.Speed;
 
@@ -256,6 +263,7 @@ public class GameFlow : MonoBehaviour
         if ((roll -= yellowCompanionChance) < 0f) return PowerUpOrb.Kind.Companion;
         if (CanSpawnReviveOrb() && (roll -= reviveChance) < 0f) return PowerUpOrb.Kind.Revive;
         if ((roll -= whiteShieldChance) < 0f) return PowerUpOrb.Kind.Shield;
+        if ((roll -= purplePierceChance) < 0f) return PowerUpOrb.Kind.Pierce;
         return PowerUpOrb.Kind.Rainbow;
     }
 
@@ -278,6 +286,7 @@ public class GameFlow : MonoBehaviour
         galaxyOrbChance = Mathf.Max(0f, galaxyOrbChance);
         orangeExplosiveChance = Mathf.Max(0f, orangeExplosiveChance);
         whiteShieldChance = Mathf.Max(0f, whiteShieldChance);
+        purplePierceChance = Mathf.Max(0f, purplePierceChance);
         rainbowChance = Mathf.Max(0f, rainbowChance);
         galaxy2xWeight = Mathf.Max(0f, galaxy2xWeight);
         galaxy3xWeight = Mathf.Max(0f, galaxy3xWeight);
@@ -293,6 +302,7 @@ public class GameFlow : MonoBehaviour
         galaxyOrbSpeed = Mathf.Max(0.1f, galaxyOrbSpeed);
         orangeOrbSpeed = Mathf.Max(0.1f, orangeOrbSpeed);
         whiteOrbSpeed = Mathf.Max(0.1f, whiteOrbSpeed);
+        purpleOrbSpeed = Mathf.Max(0.1f, purpleOrbSpeed);
         rainbowOrbSpeed = Mathf.Max(0.1f, rainbowOrbSpeed);
         reviveOrbSpeed = Mathf.Max(0.1f, reviveOrbSpeed);
     }
@@ -377,6 +387,8 @@ public class GameFlow : MonoBehaviour
             battleship?.ApplyExplosionBoost(player.PlayerNumber);
         else if (kind == PowerUpOrb.Kind.Shield)
             player.AddShieldHit();
+        else if (kind == PowerUpOrb.Kind.Pierce)
+            battleship?.ApplyPierceBoost(player.PlayerNumber);
         else
         {
             battleship?.ApplySpeedBoost(player.PlayerNumber);
@@ -409,6 +421,8 @@ public class GameFlow : MonoBehaviour
             companion.ApplyExplosionBoost();
         else if (kind == PowerUpOrb.Kind.Shield)
             companion.AddShieldHit();
+        else if (kind == PowerUpOrb.Kind.Pierce)
+            companion.ApplyPierceBoost();
         else
         {
             companion.ApplySpeedBoost();
@@ -493,7 +507,7 @@ public class GameFlow : MonoBehaviour
     public void EnemyExplosion(Vector3 position)
     {
         if (state != ScreenState.Playing) return;
-        if (audioSource != null) audioSource.PlayOneShot(explosionSound, 0.52f * soundEffectsVolume);
+        if (audioSource != null) audioSource.PlayOneShot(enemyDeathSound, 0.24f * soundEffectsVolume);
         CreateBurst(position, 38, 0.16f, 3.4f, 0.48f,
             new ParticleSystem.MinMaxGradient(new Color(1f, 0.18f, 0.02f), Color.yellow));
         CreateBurst(position, 14, 0.08f, 5.2f, 0.25f,
@@ -511,6 +525,14 @@ public class GameFlow : MonoBehaviour
         CreateBurst(position, count, 0.09f + radius * 0.025f, 2.4f + radius,
             0.24f + radius * 0.035f,
             new ParticleSystem.MinMaxGradient(new Color(1f, 0.18f, 0.01f), new Color(1f, 0.82f, 0.08f)));
+    }
+
+    public void BulletPierced(Vector3 position)
+    {
+        if (state != ScreenState.Playing)
+            return;
+        CreateBurst(position, 16, 0.075f, 2.1f, 0.24f,
+            new ParticleSystem.MinMaxGradient(new Color(0.35f, 0.02f, 0.65f), new Color(0.9f, 0.25f, 1f)));
     }
 
     private void CreateBurst(Vector3 position, int count, float size, float speed, float lifetime,
@@ -559,6 +581,31 @@ public class GameFlow : MonoBehaviour
         return clip;
     }
 
+    private static AudioClip MakeBloodSpatterSound()
+    {
+        const int sampleRate = 22050;
+        const float seconds = 0.24f;
+        int count = Mathf.CeilToInt(seconds * sampleRate);
+        float[] samples = new float[count];
+        float filteredNoise = 0f;
+        for (int i = 0; i < count; i++)
+        {
+            float time = (float)i / sampleRate;
+            float progress = time / seconds;
+            float rawNoise = Mathf.Sin(i * 17.173f + Mathf.Sin(i * 0.071f) * 31.7f);
+            filteredNoise = Mathf.Lerp(filteredNoise, rawNoise, 0.16f);
+            float wetBody = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(145f, 42f, progress) * time);
+            float splatEnvelope = Mathf.Exp(-progress * 5.5f);
+            float droplets = Mathf.Max(0f, Mathf.Sin(2f * Mathf.PI * 31f * time)) *
+                             Mathf.Exp(-Mathf.Repeat(time, 0.055f) * 42f);
+            samples[i] = Mathf.Clamp((filteredNoise * 0.48f + wetBody * 0.35f) * splatEnvelope +
+                                     droplets * 0.12f, -0.65f, 0.65f);
+        }
+        AudioClip clip = AudioClip.Create("Enemy blood spatter", count, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
     private static AudioClip MakeMusic(bool menu)
     {
         const int sampleRate = 22050;
@@ -566,22 +613,58 @@ public class GameFlow : MonoBehaviour
         int sampleCount = Mathf.RoundToInt(sampleRate * duration);
         float[] samples = new float[sampleCount];
         int[] menuNotes = { 60, 64, 67, 72, 67, 64, 62, 67, 65, 69, 72, 77, 72, 69, 67, 71 };
-        int[] gameNotes = { 48, 55, 60, 63, 50, 57, 62, 65, 52, 59, 64, 67, 50, 57, 62, 69 };
-        int[] notes = menu ? menuNotes : gameNotes;
-        float stepLength = duration / notes.Length;
+        int[] battleNotes =
+        {
+            48, 48, 55, 51, 48, 60, 58, 55,
+            50, 50, 57, 53, 50, 62, 60, 57,
+            51, 51, 58, 55, 51, 63, 62, 58,
+            46, 46, 53, 48, 55, 53, 51, 48
+        };
+        float menuStepLength = duration / menuNotes.Length;
+        float battleStepLength = duration / battleNotes.Length;
 
         for (int i = 0; i < sampleCount; i++)
         {
             float time = (float)i / sampleRate;
-            int step = Mathf.FloorToInt(time / stepLength) % notes.Length;
-            float stepTime = Mathf.Repeat(time, stepLength);
-            float melodyFrequency = 440f * Mathf.Pow(2f, (notes[step] - 69) / 12f);
-            float bassFrequency = 440f * Mathf.Pow(2f, (notes[step] - 24 - 69) / 12f);
-            float melodyEnvelope = Mathf.Clamp01(1f - stepTime / stepLength);
-            float square = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * melodyFrequency * time));
-            float bass = Mathf.Sin(2f * Mathf.PI * bassFrequency * time);
-            float pulse = Mathf.Repeat(time * (menu ? 4f : 6f), 1f) < 0.08f ? 0.13f : 0f;
-            samples[i] = square * 0.105f * melodyEnvelope + bass * 0.075f + pulse;
+            if (menu)
+            {
+                int step = Mathf.FloorToInt(time / menuStepLength) % menuNotes.Length;
+                float stepTime = Mathf.Repeat(time, menuStepLength);
+                float melodyFrequency = 440f * Mathf.Pow(2f, (menuNotes[step] - 69) / 12f);
+                float menuBassFrequency = 440f * Mathf.Pow(2f, (menuNotes[step] - 24 - 69) / 12f);
+                float melodyEnvelope = Mathf.Clamp01(1f - stepTime / menuStepLength);
+                float square = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * melodyFrequency * time));
+                float bass = Mathf.Sin(2f * Mathf.PI * menuBassFrequency * time);
+                float pulse = Mathf.Repeat(time * 4f, 1f) < 0.08f ? 0.13f : 0f;
+                samples[i] = square * 0.105f * melodyEnvelope + bass * 0.075f + pulse;
+                continue;
+            }
+
+            int battleStep = Mathf.FloorToInt(time / battleStepLength) % battleNotes.Length;
+            float battleStepTime = Mathf.Repeat(time, battleStepLength);
+            float noteEnvelope = Mathf.Pow(Mathf.Clamp01(1f - battleStepTime / battleStepLength), 0.45f);
+            float leadFrequency = 440f * Mathf.Pow(2f, (battleNotes[battleStep] + 12 - 69) / 12f);
+            float bassFrequency = 440f * Mathf.Pow(2f, (battleNotes[battleStep] - 12 - 69) / 12f);
+
+            float leadSquare = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * leadFrequency * time));
+            float bassSquare = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * bassFrequency * time));
+            float bassDrive = (float)System.Math.Tanh((bassSquare * 0.8f +
+                Mathf.Sin(2f * Mathf.PI * bassFrequency * time) * 0.55f) * 1.7f);
+
+            float beatPhase = Mathf.Repeat(time * 4f, 1f);
+            int beat = Mathf.FloorToInt(time * 4f) % 4;
+            float kickEnvelope = Mathf.Exp(-beatPhase * 10f);
+            float kickFrequency = Mathf.Lerp(105f, 46f, beatPhase);
+            float kick = Mathf.Sin(2f * Mathf.PI * kickFrequency * beatPhase) * kickEnvelope;
+
+            float noise = Mathf.Sin(i * 12.9898f + Mathf.Sin(i * 0.013f) * 37.719f);
+            float snare = (beat == 1 || beat == 3) ? noise * Mathf.Exp(-beatPhase * 15f) : 0f;
+            float hatPhase = Mathf.Repeat(time * 8f, 1f);
+            float hat = Mathf.Sign(Mathf.Sin(2f * Mathf.PI * 5200f * time)) * Mathf.Exp(-hatPhase * 24f);
+
+            float mixed = leadSquare * 0.105f * noteEnvelope + bassDrive * 0.12f +
+                          kick * 0.19f + snare * 0.075f + hat * 0.035f;
+            samples[i] = Mathf.Clamp(mixed, -0.82f, 0.82f);
         }
 
         AudioClip clip = AudioClip.Create(menu ? "Menu arcade music" : "Gameplay arcade music", sampleCount, 1, sampleRate, false);

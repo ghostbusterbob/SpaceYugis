@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -75,6 +76,16 @@ public class LevelManager : MonoBehaviour
 
     [SerializeField] private float horizontalSpacing = 1.6f;
     [SerializeField] private float verticalSpacing = 1.1f;
+    [Tooltip("Lowest Y position where a normal enemy may initially spawn.")]
+    [SerializeField] private float lowestEnemySpawnY = 1.5f;
+
+    [Header("FORMATION GROWTH")]
+    [Min(1)] [SerializeField] private int widerFormationStartWave = 10;
+    [Min(1)] [SerializeField] private int wavesPerExtraColumn = 2;
+    [Min(1)] [SerializeField] private int maximumFormationColumns = 10;
+    [Min(1)] [SerializeField] private int stackedFormationStartWave = 20;
+    [Min(0.05f)] [SerializeField] private float reinforcementEntryDuration = 0.45f;
+    [Range(0.1f, 1f)] [SerializeField] private float reinforcementStartScale = 0.35f;
 
     [Header("================================")]
     [Header("FORMATION MOVEMENT")]
@@ -120,6 +131,13 @@ public class LevelManager : MonoBehaviour
     private int direction = 1;
 
     private readonly List<Enemy> activeEnemies = new List<Enemy>();
+    private readonly Dictionary<Enemy, int> formationSlotByEnemy =
+        new Dictionary<Enemy, int>();
+    private readonly Dictionary<int, Vector3> formationSlotPositions =
+        new Dictionary<int, Vector3>();
+    private readonly Dictionary<int, int> reserveEnemiesBySlot =
+        new Dictionary<int, int>();
+    private int nextReservePrefabIndex;
 
     private Enemy currentBoss;
 
@@ -261,15 +279,27 @@ public class LevelManager : MonoBehaviour
 
         ApplyLevelConfigScaling();
 
-        int baseCount = baseRows * baseCols;
+        int safeBaseRows = Mathf.Max(1, baseRows);
+        int cols = GetFormationColumnCount();
 
+        // Enemy growth remains based on the original formation size, not on the
+        // added width. Width creates safer placement instead of multiplying growth.
+        int originalBaseCount = safeBaseRows * Mathf.Max(1, baseCols);
         float countMultiplier = 1f + (currentLevel - 1) * enemyCountIncreasePercent;
+        int requestedEnemies = Mathf.Max(1, Mathf.RoundToInt(originalBaseCount * countMultiplier));
 
-        int totalEnemies = Mathf.Max(1, Mathf.RoundToInt(baseCount * countMultiplier));
-
-        int cols = baseCols;
-
-        int rows = Mathf.CeilToInt((float)totalEnemies / cols);
+        float safeVerticalSpacing = Mathf.Max(0.1f, verticalSpacing);
+        int safeRows = Mathf.Max(1,
+            Mathf.FloorToInt((startPosition.y - lowestEnemySpawnY) / safeVerticalSpacing) + 1);
+        int slotsPerLayer = Mathf.Max(1, safeRows * cols);
+        int initialEnemyCount = Mathf.Min(requestedEnemies, slotsPerLayer);
+        int reserveEnemyCount = currentLevel >= stackedFormationStartWave
+            ? Mathf.Max(0, requestedEnemies - initialEnemyCount)
+            : 0;
+        float safeHorizontalSpacing = cols <= 1
+            ? 0f
+            : Mathf.Min(Mathf.Max(0.1f, horizontalSpacing), (rightBound - leftBound) / (cols - 1));
+        float centeredStartX = (leftBound + rightBound) * 0.5f - (cols - 1) * safeHorizontalSpacing * 0.5f;
 
         GameObject formationObject = new GameObject("Formation_Level_" + currentLevel);
 
@@ -284,40 +314,41 @@ public class LevelManager : MonoBehaviour
 
         direction = 1;
 
-        int spawnIndex = 0;
-
-        for (int row = 0; row < rows; row++)
+        for (int spawnIndex = 0; spawnIndex < initialEnemyCount; spawnIndex++)
         {
-            for (int col = 0; col < cols; col++)
-            {
-                if (spawnIndex >= totalEnemies)
-                    break;
+            GameObject prefab = SelectEnemyPrefab(spawnIndex);
+            if (prefab == null)
+                continue;
 
-                GameObject prefab = SelectEnemyPrefab(spawnIndex);
+            int slotInLayer = spawnIndex;
+            int row = slotInLayer / cols;
+            int col = slotInLayer % cols;
+            Vector3 position = new Vector3(
+                centeredStartX + col * safeHorizontalSpacing,
+                startPosition.y - row * safeVerticalSpacing,
+                0f);
 
-                if (prefab == null)
-                    continue;
+            GameObject enemyObject = Instantiate(prefab, position, Quaternion.identity, formationContainer);
+            Enemy enemy = enemyObject.GetComponent<Enemy>();
+            if (enemy == null)
+                enemy = enemyObject.AddComponent<Enemy>();
 
-                Vector3 position = new Vector3(startPosition.x + col * horizontalSpacing,
-                                               startPosition.y - row * verticalSpacing,
-                                               0f);
-
-                GameObject enemyObject = Instantiate(prefab, position, Quaternion.identity, formationContainer);
-
-                Enemy enemy = enemyObject.GetComponent<Enemy>();
-                if (enemy == null)
-                {
-                    enemy = enemyObject.AddComponent<Enemy>();
-                }
-
-                ConfigureNormalEnemy(enemy);
-                activeEnemies.Add(enemy);
-
-                spawnIndex++;
-            }
+            ConfigureNormalEnemy(enemy);
+            activeEnemies.Add(enemy);
+            RegisterFormationSlot(slotInLayer, enemy);
+            formationSlotPositions[slotInLayer] = enemyObject.transform.localPosition;
         }
 
-        Debug.Log("Level " + currentLevel + " gestart met " + totalEnemies + " enemies.");
+        for (int reserveIndex = 0; reserveIndex < reserveEnemyCount; reserveIndex++)
+        {
+            int slot = reserveIndex % Mathf.Max(1, initialEnemyCount);
+            reserveEnemiesBySlot.TryGetValue(slot, out int currentReserves);
+            reserveEnemiesBySlot[slot] = currentReserves + 1;
+        }
+        nextReservePrefabIndex = initialEnemyCount;
+
+        Debug.Log("Level " + currentLevel + " gestart met " + initialEnemyCount +
+                  " actieve enemies en " + reserveEnemyCount + " reserves.");
     }
 
     // ============================================
@@ -422,6 +453,8 @@ public class LevelManager : MonoBehaviour
             activeEnemies.Remove(enemy);
         }
 
+        SpawnNextReserveForSlot(enemy);
+
         if (activeEnemies.Count <= 0 && !bossAlive)
         {
             SpawnBoss();
@@ -472,12 +505,116 @@ public class LevelManager : MonoBehaviour
     private void ClearExistingFormation()
     {
         activeEnemies.Clear();
+        formationSlotByEnemy.Clear();
+        formationSlotPositions.Clear();
+        reserveEnemiesBySlot.Clear();
+        nextReservePrefabIndex = 0;
 
         if (formationContainer != null)
         {
             Destroy(formationContainer.gameObject);
             formationContainer = null;
         }
+    }
+
+    private int GetFormationColumnCount()
+    {
+        int columns = Mathf.Max(1, baseCols);
+        if (currentLevel >= widerFormationStartWave)
+        {
+            int extraColumns = 1 + (currentLevel - widerFormationStartWave) /
+                Mathf.Max(1, wavesPerExtraColumn);
+            columns += extraColumns;
+        }
+        return Mathf.Min(columns, Mathf.Max(1, maximumFormationColumns));
+    }
+
+    private void RegisterFormationSlot(int slot, Enemy enemy)
+    {
+        formationSlotByEnemy[enemy] = slot;
+    }
+
+    private void SpawnNextReserveForSlot(Enemy destroyedEnemy)
+    {
+        if (!formationSlotByEnemy.TryGetValue(destroyedEnemy, out int slot))
+            return;
+
+        formationSlotByEnemy.Remove(destroyedEnemy);
+        if (!reserveEnemiesBySlot.TryGetValue(slot, out int reserveCount) || reserveCount <= 0)
+            return;
+        if (!formationSlotPositions.TryGetValue(slot, out Vector3 localPosition))
+            return;
+
+        reserveEnemiesBySlot[slot] = reserveCount - 1;
+        GameObject prefab = SelectEnemyPrefab(nextReservePrefabIndex++);
+        if (prefab == null || formationContainer == null)
+            return;
+
+        GameObject enemyObject = Instantiate(prefab, formationContainer);
+        enemyObject.transform.localPosition = localPosition;
+        enemyObject.transform.localRotation = Quaternion.identity;
+        Enemy enemy = enemyObject.GetComponent<Enemy>();
+        if (enemy == null)
+            enemy = enemyObject.AddComponent<Enemy>();
+
+        ConfigureNormalEnemy(enemy);
+        activeEnemies.Add(enemy);
+        RegisterFormationSlot(slot, enemy);
+        StartCoroutine(ReinforcementEntry(enemy));
+    }
+
+    private IEnumerator ReinforcementEntry(Enemy enemy)
+    {
+        if (enemy == null)
+            yield break;
+
+        foreach (Collider2D collider in enemy.GetComponentsInChildren<Collider2D>())
+            collider.enabled = false;
+        EnemyShooter shooter = enemy.GetComponent<EnemyShooter>();
+        if (shooter != null)
+            shooter.enabled = false;
+
+        Transform enemyTransform = enemy.transform;
+        Vector3 finalScale = enemyTransform.localScale;
+        enemyTransform.localScale = finalScale * reinforcementStartScale;
+        SpriteRenderer[] renderers = enemy.GetComponentsInChildren<SpriteRenderer>();
+        Color[] finalColors = new Color[renderers.Length];
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            finalColors[i] = renderers[i].color;
+            Color hidden = finalColors[i];
+            hidden.a = 0f;
+            renderers[i].color = hidden;
+        }
+
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.05f, reinforcementEntryDuration);
+        while (elapsed < duration)
+        {
+            if (enemy == null)
+                yield break;
+            elapsed += Time.deltaTime;
+            float progress = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
+            enemyTransform.localScale = Vector3.Lerp(finalScale * reinforcementStartScale, finalScale, progress);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                Color color = finalColors[i];
+                color.a *= progress;
+                renderers[i].color = color;
+            }
+            yield return null;
+        }
+
+        if (enemy == null)
+            yield break;
+        enemyTransform.localScale = finalScale;
+        for (int i = 0; i < renderers.Length; i++)
+            if (renderers[i] != null) renderers[i].color = finalColors[i];
+        foreach (Collider2D collider in enemy.GetComponentsInChildren<Collider2D>())
+            collider.enabled = true;
+        if (shooter != null)
+            shooter.enabled = true;
     }
 
     // ============================================

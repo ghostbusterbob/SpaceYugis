@@ -25,6 +25,8 @@ public class Battleship : MonoBehaviour
 
     [Header("COMPANION SETTINGS")]
     [Range(0.25f, 1f)] [SerializeField] private float companionScale = 0.58f;
+    [Tooltip("Hitbox size relative to the visible companion sprite.")]
+    [Range(0.2f, 1f)] [SerializeField] private float companionHitboxScale = 0.75f;
     [Min(0.5f)] [SerializeField] private float companionFirstSideDistance = 1.35f;
     [Min(0.2f)] [SerializeField] private float companionExtraSpacing = 0.78f;
     [SerializeField] private float companionVerticalOffset = 0.12f;
@@ -41,6 +43,7 @@ public class Battleship : MonoBehaviour
     private readonly float[] speedMultipliers = { 1f, 1f };
     private readonly float[] fireRateMultipliers = { 1f, 1f };
     private readonly float[] explosionRadii = { 0f, 0f };
+    private readonly int[] pierceCounts = { 0, 0 };
     private bool twoPlayerMode = true;
     private int soloPhysicalPlayer = 1;
 
@@ -72,17 +75,25 @@ public class Battleship : MonoBehaviour
                 explosionRadii[index] + explosionRadiusPerOrangeOrb);
     }
 
+    public void ApplyPierceBoost(int playerNumber)
+    {
+        int index = playerNumber - 1;
+        if (index >= 0 && index < pierceCounts.Length)
+            pierceCounts[index]++;
+    }
+
     public void SpawnCompanion(PlayerHealth owner)
     {
         if (owner == null || owner.IsDead || bulletPrefab == null)
             return;
 
         CompanionShip.Spawn(owner, bulletPrefab, bulletSpeed, bulletDamage, bulletRange,
-            companionScale, companionFirstSideDistance, companionExtraSpacing,
+            companionScale, companionHitboxScale, companionFirstSideDistance, companionExtraSpacing,
             companionVerticalOffset, companionFireCooldown, companionFollowSpeed,
             companionStartingLives, twoPlayerMode ? owner.PlayerNumber : 1,
             explosionRadii[owner.PlayerNumber - 1],
-            explosionRadiusPerOrangeOrb, maximumExplosionRadius);
+            explosionRadiusPerOrangeOrb, maximumExplosionRadius,
+            pierceCounts[owner.PlayerNumber - 1]);
     }
 
     private bool IsAlive(Transform ship)
@@ -255,6 +266,7 @@ public class Battleship : MonoBehaviour
         );
         bullet.OwnerPlayer = playerNumber;
         bullet.ExplosionRadius = explosionRadii[Mathf.Clamp(statsIndex, 0, 1)];
+        bullet.PiercesRemaining = pierceCounts[Mathf.Clamp(statsIndex, 0, 1)];
         GameFlow.Instance?.PlayShot();
     }
 }

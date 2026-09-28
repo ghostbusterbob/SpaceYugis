@@ -256,7 +256,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 8
+  orthographic size: 7
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -351,13 +351,6 @@ MonoBehaviour:
   startPosition: {x: -6, y: 6.5}
   horizontalSpacing: 1.65
   verticalSpacing: 1.15
-  lowestEnemySpawnY: 1.5
-  widerFormationStartWave: 10
-  wavesPerExtraColumn: 2
-  maximumFormationColumns: 10
-  stackedFormationStartWave: 20
-  reinforcementEntryDuration: 0.45
-  reinforcementStartScale: 0.35
   normalMovementSpeed: 1.5
   leftBound: -7.5
   rightBound: 7.5
@@ -767,7 +760,7 @@ MonoBehaviour:
   player1FirePoint: {fileID: 1561047934}
   player2: {fileID: 1275133671}
   player2FirePoint: {fileID: 304010975}
-  moveSpeed: 5
+  moveSpeed: 7
   leftLimit: -7.5
   rightLimit: 7.5
   bulletPrefab: {fileID: 2579992567038757543, guid: 40ead5a59cc96d1408a3b71ad37ef604, type: 3}
@@ -775,8 +768,7 @@ MonoBehaviour:
   bulletSpeed: 10
   bulletDamage: 1
   bulletRange: 15
-  companionScale: 0.5
-  companionHitboxScale: 0.75
+  companionScale: 0.58
   companionFirstSideDistance: 1.35
   companionExtraSpacing: 0.78
   companionVerticalOffset: 0.12
@@ -784,7 +776,7 @@ MonoBehaviour:
   companionFollowSpeed: 10
   companionStartingLives: 2
   explosionRadiusPerOrangeOrb: 0.75
-  maximumExplosionRadius: 3
+  maximumExplosionRadius: 4
 --- !u!4 &619946145
 Transform:
   m_ObjectHideFlags: 0
@@ -829,34 +821,32 @@ MonoBehaviour:
   redOrbSpeed: 1
   greenOrbSpeed: 1
   yellowOrbSpeed: 1
-  galaxyOrbSpeed: 1.25
+  galaxyOrbSpeed: 1
   orangeOrbSpeed: 1
   whiteOrbSpeed: 1
-  purpleOrbSpeed: 1
-  rainbowOrbSpeed: 1.5
-  reviveOrbSpeed: 2
+  rainbowOrbSpeed: 1.15
+  reviveOrbSpeed: 2.25
   normalOrbRotationSpeed: 100
   rainbowColourCycleSpeed: 0.45
-  reviveHorizontalSpeed: 3
-  reviveWeaveFrequency: 5
-  reviveRotationSpeed: 500
-  reviveBlinkSpeed: 15
+  reviveHorizontalSpeed: 4.5
+  reviveWeaveFrequency: 8
+  reviveRotationSpeed: 620
+  reviveBlinkSpeed: 18
   blueSpeedChance: 30
   redFireRateChance: 25
   greenLifeChance: 20
   yellowCompanionChance: 20
-  darkGreenReviveChance: 5
-  galaxyOrbChance: 2.5
-  orangeExplosiveChance: 10
-  whiteShieldChance: 15
-  purplePierceChance: 7.5
+  darkGreenReviveChance: 1
+  galaxyOrbChance: 1
+  orangeExplosiveChance: 2
+  whiteShieldChance: 5
   rainbowChance: 5
   galaxy2xWeight: 60
   galaxy3xWeight: 20
   galaxy5xWeight: 10
   galaxyMultiplierDuration: 30
   menuMusicVolume: 0.2
-  gameplayMusicVolume: 0.2
+  gameplayMusicVolume: 0.16
   soundEffectsVolume: 1
 --- !u!1 &890293345
 GameObject:

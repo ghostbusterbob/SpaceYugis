@@ -23,14 +23,15 @@ public class CompanionShip : MonoBehaviour
     private float maximumExplosionRadius;
     private int shieldHits;
     private LineRenderer shieldRing;
+    private int pierceCount;
 
     public PlayerHealth Owner => owner;
     public bool IsDead => dead;
 
     public static void Spawn(PlayerHealth player, GameObject projectile, float speed, float damage, float range,
-        float shipScale, float firstSideDistance, float extraSpacing, float verticalOffset, float shotCooldown,
+        float shipScale, float hitboxScale, float firstSideDistance, float extraSpacing, float verticalOffset, float shotCooldown,
         float movementFollowSpeed, int startingLives, int logicalPlayerNumber, float startingExplosionRadius,
-        float explosionIncrement, float maxExplosionRadius)
+        float explosionIncrement, float maxExplosionRadius, int startingPierceCount)
     {
         Sprite ownerSprite = player.LifeSprite;
         if (ownerSprite == null)
@@ -54,6 +55,7 @@ public class CompanionShip : MonoBehaviour
         companion.explosionRadius = startingExplosionRadius;
         companion.explosionRadiusIncrement = explosionIncrement;
         companion.maximumExplosionRadius = maxExplosionRadius;
+        companion.pierceCount = Mathf.Max(0, startingPierceCount);
         companion.slotIndex = FindFreeSlot(player);
         int side = companion.slotIndex % 2 == 0 ? 1 : -1;
         int row = companion.slotIndex / 2;
@@ -70,7 +72,9 @@ public class CompanionShip : MonoBehaviour
 
         CircleCollider2D collider = ship.GetComponent<CircleCollider2D>();
         collider.isTrigger = true;
-        collider.radius = 0.42f;
+        collider.offset = ownerSprite.bounds.center;
+        float visibleHalfSize = Mathf.Min(ownerSprite.bounds.extents.x, ownerSprite.bounds.extents.y);
+        collider.radius = Mathf.Max(0.01f, visibleHalfSize * Mathf.Clamp(hitboxScale, 0.2f, 1f));
 
         Rigidbody2D body = ship.GetComponent<Rigidbody2D>();
         body.bodyType = RigidbodyType2D.Kinematic;
@@ -147,6 +151,7 @@ public class CompanionShip : MonoBehaviour
         bullet.Initialize(bulletSpeed, bulletDamage, bulletRange, Vector3.up);
         bullet.OwnerPlayer = scorePlayerNumber;
         bullet.ExplosionRadius = explosionRadius;
+        bullet.PiercesRemaining = pierceCount;
         GameFlow.Instance?.PlayShot();
     }
 
@@ -197,6 +202,12 @@ public class CompanionShip : MonoBehaviour
     {
         if (!dead)
             explosionRadius = Mathf.Min(maximumExplosionRadius, explosionRadius + explosionRadiusIncrement);
+    }
+
+    public void ApplyPierceBoost()
+    {
+        if (!dead)
+            pierceCount++;
     }
 
     public void AddShieldHit()

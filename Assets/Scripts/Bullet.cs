@@ -9,10 +9,16 @@ public class Bullet : MonoBehaviour
 
     private Vector3 direction = Vector3.up;
     private Vector3 startPosition;
+    private bool spent;
+    private readonly System.Collections.Generic.HashSet<Enemy> contactedEnemies =
+        new System.Collections.Generic.HashSet<Enemy>();
+    private readonly System.Collections.Generic.HashSet<Enemy> damagedEnemies =
+        new System.Collections.Generic.HashSet<Enemy>();
 
     public float Damage => damage;
     public int OwnerPlayer { get; set; }
     public float ExplosionRadius { get; set; }
+    public int PiercesRemaining { get; set; }
 
     private void Start()
     {
@@ -51,7 +57,7 @@ public class Bullet : MonoBehaviour
 
     public void HitEnemy(Collider2D other)
     {
-        if (!other.CompareTag("Enemy"))
+        if (spent || !other.CompareTag("Enemy"))
             return;
 
         Enemy enemy = other.GetComponent<Enemy>();
@@ -59,22 +65,28 @@ public class Bullet : MonoBehaviour
         if (enemy == null)
             enemy = other.GetComponentInParent<Enemy>();
 
-        if (enemy == null)
+        if (enemy == null || !contactedEnemies.Add(enemy))
             return;
 
         if (ExplosionRadius > 0f)
             Explode(enemy.transform.position);
-        else
+        else if (damagedEnemies.Add(enemy))
             enemy.TakeDamage(damage, OwnerPlayer);
 
+        if (PiercesRemaining > 0)
+        {
+            PiercesRemaining--;
+            GameFlow.Instance?.BulletPierced(enemy.transform.position);
+            return;
+        }
+
+        spent = true;
         Destroy(gameObject);
     }
 
     private void Explode(Vector3 position)
     {
         Collider2D[] colliders = Physics2D.OverlapCircleAll(position, ExplosionRadius);
-        System.Collections.Generic.HashSet<Enemy> damagedEnemies =
-            new System.Collections.Generic.HashSet<Enemy>();
         foreach (Collider2D hit in colliders)
         {
             Enemy hitEnemy = hit.GetComponent<Enemy>();
