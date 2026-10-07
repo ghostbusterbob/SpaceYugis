@@ -180,6 +180,27 @@ public class CompanionShip : MonoBehaviour
         Destroy(gameObject);
     }
 
+    public void TakeMeteorHit()
+    {
+        if (dead)
+            return;
+
+        // Even a companion with multiple lives is destroyed by one meteor. A
+        // stacked shield only loses one layer and fully blocks that meteor.
+        if (shieldHits > 0)
+        {
+            shieldHits--;
+            UpdateShieldRing();
+            GameFlow.Instance?.PlayHit();
+            return;
+        }
+
+        lives = 0;
+        dead = true;
+        GameFlow.Instance?.EnemyExplosion(transform.position);
+        Destroy(gameObject);
+    }
+
     public void ApplySpeedBoost()
     {
         if (!dead)

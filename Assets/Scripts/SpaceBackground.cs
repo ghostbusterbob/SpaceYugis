@@ -19,6 +19,8 @@ public class SpaceBackground : MonoBehaviour
     [Range(20, 160)] [SerializeField] private int starCount = 85;
     [Range(1, 6)] [SerializeField] private int planetCount = 3;
     [SerializeField] private float planetFloatDistance = 0.18f;
+    [Tooltip("Background is generated for this camera size so zooming out never reveals empty edges.")]
+    [Min(1f)] [SerializeField] private float maximumCameraCoverageSize = 11f;
 
     [Header("GALAXY COLOUR")]
     [Range(0f, 1f)] [SerializeField] private float baseHue = 0.61f;
@@ -89,19 +91,23 @@ public class SpaceBackground : MonoBehaviour
         GameObject root = new GameObject("Cartoon space background");
         backgroundRoot = root.transform;
 
-        float halfHeight = sceneCamera.orthographicSize;
+        float initialHalfHeight = sceneCamera.orthographicSize;
+        float halfHeight = Mathf.Max(initialHalfHeight, maximumCameraCoverageSize);
         float halfWidth = halfHeight * sceneCamera.aspect;
         Vector2 cameraCenter = sceneCamera.transform.position;
         starSprite = CreateStarSprite();
+        float coverageRatio = halfHeight / Mathf.Max(0.1f, initialHalfHeight);
+        int generatedStarCount = Mathf.Clamp(
+            Mathf.RoundToInt(starCount * coverageRatio * coverageRatio), starCount, 320);
 
         Random.State previousState = Random.state;
         Random.InitState(90210);
 
-        CreateNebula(new Vector3(cameraCenter.x - halfWidth * 0.35f, cameraCenter.y + halfHeight * 0.25f, 3f), new Vector3(4.8f, 2.5f, 1f));
-        CreateNebula(new Vector3(cameraCenter.x + halfWidth * 0.42f, cameraCenter.y - halfHeight * 0.18f, 3f), new Vector3(5.4f, 2.8f, 1f));
-        CreateNebula(new Vector3(cameraCenter.x, cameraCenter.y + halfHeight * 0.62f, 3f), new Vector3(3.8f, 2.1f, 1f));
+        CreateNebula(new Vector3(cameraCenter.x - halfWidth * 0.35f, cameraCenter.y + halfHeight * 0.25f, 3f), new Vector3(4.8f, 2.5f, 1f) * coverageRatio);
+        CreateNebula(new Vector3(cameraCenter.x + halfWidth * 0.42f, cameraCenter.y - halfHeight * 0.18f, 3f), new Vector3(5.4f, 2.8f, 1f) * coverageRatio);
+        CreateNebula(new Vector3(cameraCenter.x, cameraCenter.y + halfHeight * 0.62f, 3f), new Vector3(3.8f, 2.1f, 1f) * coverageRatio);
 
-        for (int i = 0; i < starCount; i++)
+        for (int i = 0; i < generatedStarCount; i++)
         {
             GameObject star = new GameObject("Star");
             star.transform.SetParent(backgroundRoot);

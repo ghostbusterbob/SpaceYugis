@@ -63,6 +63,13 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
+    public void TakeMeteorHit()
+    {
+        // A meteor is lethal regardless of the player's remaining lives. TakeDamage
+        // still handles revive invulnerability and consumes exactly one shield hit.
+        TakeDamage(CurrentLives);
+    }
+
     public void AddLife()
     {
         if (IsDead)

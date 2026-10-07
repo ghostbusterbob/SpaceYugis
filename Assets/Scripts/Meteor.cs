@@ -100,14 +100,14 @@ public class Meteor : MonoBehaviour
         CompanionShip companion = other.GetComponentInParent<CompanionShip>();
         if (companion != null)
         {
-            companion.TakeHit();
+            companion.TakeMeteorHit();
             Destroy(gameObject, destroyOnImpactDelay);
             return;
         }
 
         PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
         if (health != null)
-            health.TakeDamage(health.CurrentLives);
+            health.TakeMeteorHit();
 
         Destroy(gameObject, destroyOnImpactDelay);
     }

@@ -5,6 +5,7 @@ using UnityEngine;
 public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
+    public int CurrentWave => currentLevel;
 
     [Header("================================")]
     [Header("ENEMY PREFABS")]
@@ -87,16 +88,30 @@ public class LevelManager : MonoBehaviour
     [Min(0.05f)] [SerializeField] private float reinforcementEntryDuration = 0.45f;
     [Range(0.1f, 1f)] [SerializeField] private float reinforcementStartScale = 0.35f;
 
+    [Header("DYNAMIC CAMERA")]
+    [SerializeField] private Camera gameplayCamera;
+    [Min(1)] [SerializeField] private int cameraZoomStartEnemyCount = 36;
+    [Min(1f)] [SerializeField] private float enemiesPerCameraSizeUnit = 10f;
+    [Min(1f)] [SerializeField] private float maximumCameraSize = 10.5f;
+    [Min(0.1f)] [SerializeField] private float cameraZoomSpeed = 1.5f;
+
     [Header("================================")]
     [Header("FORMATION MOVEMENT")]
     [Header("================================")]
 
     [SerializeField] private float normalMovementSpeed = 1.5f;
+    [Min(0.1f)] [SerializeField] private float maximumNormalMovementSpeed = 4.5f;
 
     [SerializeField] private float leftBound = -7.5f;
     [SerializeField] private float rightBound = 7.5f;
 
     [SerializeField] private float descentAmount = 0.6f;
+    [Tooltip("Minimum total horizontal travel space kept for wide formations.")]
+    [Min(0f)] [SerializeField] private float minimumHorizontalTravelDistance = 3f;
+    [Tooltip("Prevents rapid repeated drops when a formation is very wide.")]
+    [Min(0f)] [SerializeField] private float minimumDescentInterval = 2.5f;
+    [Tooltip("Lowest world-space Y an enemy in the formation may reach.")]
+    [SerializeField] private float lowestEnemyMovementY = -1f;
 
     [Header("================================")]
     [Header("LEVEL SCALING")]
@@ -129,6 +144,7 @@ public class LevelManager : MonoBehaviour
     private Transform formationContainer;
 
     private int direction = 1;
+    private float nextAllowedDescentTime;
 
     private readonly List<Enemy> activeEnemies = new List<Enemy>();
     private readonly Dictionary<Enemy, int> formationSlotByEnemy =
@@ -138,6 +154,8 @@ public class LevelManager : MonoBehaviour
     private readonly Dictionary<int, int> reserveEnemiesBySlot =
         new Dictionary<int, int>();
     private int nextReservePrefabIndex;
+    private float baseCameraSize;
+    private float targetCameraSize;
 
     private Enemy currentBoss;
 
@@ -163,6 +181,13 @@ public class LevelManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        if (gameplayCamera == null)
+            gameplayCamera = Camera.main;
+        if (gameplayCamera != null)
+        {
+            baseCameraSize = gameplayCamera.orthographicSize;
+            targetCameraSize = baseCameraSize;
+        }
     }
 
     private void OnEnable()
@@ -183,6 +208,7 @@ public class LevelManager : MonoBehaviour
 
     private void Update()
     {
+        UpdateCameraZoom();
         if (formationContainer == null)
             return;
 
@@ -191,7 +217,8 @@ public class LevelManager : MonoBehaviour
 
     private void ApplyLevelConfigScaling()
     {
-        effectiveNormalMovementSpeed = normalMovementSpeed * (1f + (currentLevel - 1) * enemyMovementSpeedIncreasePercent);
+        effectiveNormalMovementSpeed = Mathf.Min(maximumNormalMovementSpeed,
+            normalMovementSpeed * (1f + (currentLevel - 1) * enemyMovementSpeedIncreasePercent));
 
         effectiveNormalEnemyBulletDamage = normalEnemyBulletDamage * (1f + (currentLevel - 1) * enemyBulletDamageIncreasePercent);
         effectiveNormalEnemyBulletSpeed = normalEnemyBulletSpeed;
@@ -226,14 +253,17 @@ public class LevelManager : MonoBehaviour
 
         float left = GetFormationLeft();
         float right = GetFormationRight();
+        GetEffectiveHorizontalBounds(out float effectiveLeftBound, out float effectiveRightBound);
 
-        if (direction > 0 && right >= rightBound)
+        if (direction > 0 && right >= effectiveRightBound)
         {
-            StepDownAndReverse();
+            formationContainer.position += Vector3.left * Mathf.Max(0f, right - effectiveRightBound);
+            ReverseAndMaybeStepDown();
         }
-        else if (direction < 0 && left <= leftBound)
+        else if (direction < 0 && left <= effectiveLeftBound)
         {
-            StepDownAndReverse();
+            formationContainer.position += Vector3.right * Mathf.Max(0f, effectiveLeftBound - left);
+            ReverseAndMaybeStepDown();
         }
     }
 
@@ -261,10 +291,26 @@ public class LevelManager : MonoBehaviour
         return right;
     }
 
-    private void StepDownAndReverse()
+    private float GetFormationBottom()
+    {
+        float bottom = float.MaxValue;
+        foreach (Transform child in formationContainer)
+            bottom = Mathf.Min(bottom, child.position.y);
+        return bottom;
+    }
+
+    private void ReverseAndMaybeStepDown()
     {
         direction *= -1;
-        formationContainer.position += Vector3.down * descentAmount;
+        if (Time.time < nextAllowedDescentTime)
+            return;
+
+        float safeDescent = Mathf.Max(0f, descentAmount);
+        if (GetFormationBottom() - safeDescent < lowestEnemyMovementY)
+            return;
+
+        formationContainer.position += Vector3.down * safeDescent;
+        nextAllowedDescentTime = Time.time + minimumDescentInterval;
     }
 
     // ============================================
@@ -287,6 +333,7 @@ public class LevelManager : MonoBehaviour
         int originalBaseCount = safeBaseRows * Mathf.Max(1, baseCols);
         float countMultiplier = 1f + (currentLevel - 1) * enemyCountIncreasePercent;
         int requestedEnemies = Mathf.Max(1, Mathf.RoundToInt(originalBaseCount * countMultiplier));
+        SetCameraTargetForEnemyCount(requestedEnemies);
 
         float safeVerticalSpacing = Mathf.Max(0.1f, verticalSpacing);
         int safeRows = Mathf.Max(1,
@@ -296,10 +343,16 @@ public class LevelManager : MonoBehaviour
         int reserveEnemyCount = currentLevel >= stackedFormationStartWave
             ? Mathf.Max(0, requestedEnemies - initialEnemyCount)
             : 0;
+        GetEffectiveHorizontalBounds(out float effectiveLeftBound, out float effectiveRightBound);
+        float availableWidth = Mathf.Max(0.1f, effectiveRightBound - effectiveLeftBound);
+        float reservedTravel = Mathf.Clamp(minimumHorizontalTravelDistance, 0f,
+            Mathf.Max(0f, availableWidth - 0.1f));
         float safeHorizontalSpacing = cols <= 1
             ? 0f
-            : Mathf.Min(Mathf.Max(0.1f, horizontalSpacing), (rightBound - leftBound) / (cols - 1));
-        float centeredStartX = (leftBound + rightBound) * 0.5f - (cols - 1) * safeHorizontalSpacing * 0.5f;
+            : Mathf.Min(Mathf.Max(0.1f, horizontalSpacing),
+                (availableWidth - reservedTravel) / (cols - 1));
+        float centeredStartX = (effectiveLeftBound + effectiveRightBound) * 0.5f -
+                               (cols - 1) * safeHorizontalSpacing * 0.5f;
 
         GameObject formationObject = new GameObject("Formation_Level_" + currentLevel);
 
@@ -313,6 +366,7 @@ public class LevelManager : MonoBehaviour
         formationContainer.position = Vector3.zero;
 
         direction = 1;
+        nextAllowedDescentTime = Time.time;
 
         for (int spawnIndex = 0; spawnIndex < initialEnemyCount; spawnIndex++)
         {
@@ -392,7 +446,8 @@ public class LevelManager : MonoBehaviour
 
         bossAlive = true;
 
-        Vector3 spawnPosition = new Vector3((leftBound + rightBound) / 2f, startPosition.y, 0f);
+        GetEffectiveHorizontalBounds(out float effectiveLeftBound, out float effectiveRightBound);
+        Vector3 spawnPosition = new Vector3((effectiveLeftBound + effectiveRightBound) / 2f, startPosition.y, 0f);
 
         GameObject bossObject = Instantiate(bossPrefab, spawnPosition, Quaternion.identity);
 
@@ -432,7 +487,7 @@ public class LevelManager : MonoBehaviour
 
         float dashChance = Mathf.Min(bossDashMaximumChance,
             bossDashStartingChance + (currentLevel - 1) * bossDashChanceIncreasePerWave);
-        bossMovement.Configure(currentBossMovementSpeed, leftBound, rightBound,
+        bossMovement.Configure(currentBossMovementSpeed, effectiveLeftBound, effectiveRightBound,
             dashChance, bossDashSpeed, bossDashCheckInterval, bossDashCooldown);
 
     }
@@ -527,6 +582,34 @@ public class LevelManager : MonoBehaviour
             columns += extraColumns;
         }
         return Mathf.Min(columns, Mathf.Max(1, maximumFormationColumns));
+    }
+
+    private void SetCameraTargetForEnemyCount(int enemyCount)
+    {
+        if (gameplayCamera == null)
+            return;
+        float extraEnemies = Mathf.Max(0, enemyCount - cameraZoomStartEnemyCount);
+        float requestedSize = baseCameraSize + extraEnemies / Mathf.Max(1f, enemiesPerCameraSizeUnit);
+        targetCameraSize = Mathf.Clamp(requestedSize, baseCameraSize,
+            Mathf.Max(baseCameraSize, maximumCameraSize));
+    }
+
+    private void GetEffectiveHorizontalBounds(out float effectiveLeft, out float effectiveRight)
+    {
+        float center = (leftBound + rightBound) * 0.5f;
+        float zoomRatio = baseCameraSize > 0f
+            ? Mathf.Max(1f, targetCameraSize / baseCameraSize)
+            : 1f;
+        effectiveLeft = center + (leftBound - center) * zoomRatio;
+        effectiveRight = center + (rightBound - center) * zoomRatio;
+    }
+
+    private void UpdateCameraZoom()
+    {
+        if (gameplayCamera == null || !gameplayCamera.orthographic)
+            return;
+        gameplayCamera.orthographicSize = Mathf.MoveTowards(gameplayCamera.orthographicSize,
+            targetCameraSize, cameraZoomSpeed * Time.unscaledDeltaTime);
     }
 
     private void RegisterFormationSlot(int slot, Enemy enemy)

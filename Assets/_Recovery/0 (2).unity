@@ -358,11 +358,6 @@ MonoBehaviour:
   stackedFormationStartWave: 20
   reinforcementEntryDuration: 0.45
   reinforcementStartScale: 0.35
-  gameplayCamera: {fileID: 0}
-  cameraZoomStartEnemyCount: 36
-  enemiesPerCameraSizeUnit: 10
-  maximumCameraSize: 10.5
-  cameraZoomSpeed: 1.5
   normalMovementSpeed: 1.5
   maximumNormalMovementSpeed: 4.5
   leftBound: -7.5
@@ -853,11 +848,11 @@ MonoBehaviour:
   blueSpeedChance: 30
   redFireRateChance: 25
   greenLifeChance: 20
-  yellowCompanionChance: 15
+  yellowCompanionChance: 20
   darkGreenReviveChance: 5
   galaxyOrbChance: 2.5
   orangeExplosiveChance: 10
-  whiteShieldChance: 17.5
+  whiteShieldChance: 15
   purplePierceChance: 7.5
   rainbowChance: 5
   galaxy2xWeight: 60
@@ -1016,7 +1011,7 @@ Transform:
   m_GameObject: {fileID: 1275133667}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.34, y: -3.15, z: 0}
+  m_LocalPosition: {x: 2.8, y: -2.46415, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1202,7 +1197,7 @@ Transform:
   m_GameObject: {fileID: 1464343498}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.09, y: -3.15, z: 0}
+  m_LocalPosition: {x: -4.63, y: -2.46415, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1503,7 +1498,6 @@ MonoBehaviour:
   starCount: 85
   planetCount: 3
   planetFloatDistance: 0.18
-  maximumCameraCoverageSize: 11
   baseHue: 0.61
   hueShiftAmount: 0.055
   colourChangeSpeed: 0.055

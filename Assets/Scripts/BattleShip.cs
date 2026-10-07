@@ -15,6 +15,11 @@ public class Battleship : MonoBehaviour
     [SerializeField] private float moveSpeed = 7f;
     [SerializeField] private float leftLimit = -7.5f;
     [SerializeField] private float rightLimit = 7.5f;
+    [SerializeField] private Camera gameplayCamera;
+    [Tooltip("Keeps both ships at their original percentage of the screen height while the camera zooms out.")]
+    [SerializeField] private bool keepShipScreenHeight = true;
+    [Tooltip("Lets the ships use the extra horizontal space revealed by camera zoom.")]
+    [SerializeField] private bool expandHorizontalLimitsWithCamera = true;
 
     [Header("Shooting")]
     [SerializeField] private GameObject bulletPrefab;
@@ -46,6 +51,23 @@ public class Battleship : MonoBehaviour
     private readonly int[] pierceCounts = { 0, 0 };
     private bool twoPlayerMode = true;
     private int soloPhysicalPlayer = 1;
+    private float baseCameraSize;
+    private float player1ViewportY;
+    private float player2ViewportY;
+
+    private void Awake()
+    {
+        if (gameplayCamera == null)
+            gameplayCamera = Camera.main;
+        if (gameplayCamera == null)
+            return;
+
+        baseCameraSize = gameplayCamera.orthographicSize;
+        if (player1 != null)
+            player1ViewportY = gameplayCamera.WorldToViewportPoint(player1.position).y;
+        if (player2 != null)
+            player2ViewportY = gameplayCamera.WorldToViewportPoint(player2.position).y;
+    }
 
     public void ConfigureGameMode(bool useTwoPlayers, int selectedSoloPlayer)
     {
@@ -118,6 +140,43 @@ public class Battleship : MonoBehaviour
         ShootPlayer2();
     }
 
+    private void LateUpdate()
+    {
+        if (!keepShipScreenHeight || gameplayCamera == null)
+            return;
+
+        AnchorShipToViewportHeight(player1, player1ViewportY);
+        AnchorShipToViewportHeight(player2, player2ViewportY);
+    }
+
+    private void AnchorShipToViewportHeight(Transform ship, float viewportY)
+    {
+        if (ship == null)
+            return;
+
+        float cameraDistance = ship.position.z - gameplayCamera.transform.position.z;
+        float anchoredY = gameplayCamera.ViewportToWorldPoint(
+            new Vector3(0.5f, viewportY, cameraDistance)).y;
+        Vector3 position = ship.position;
+        position.y = anchoredY;
+        ship.position = position;
+    }
+
+    private void GetCurrentHorizontalLimits(out float currentLeft, out float currentRight)
+    {
+        if (!expandHorizontalLimitsWithCamera || gameplayCamera == null || baseCameraSize <= 0f)
+        {
+            currentLeft = leftLimit;
+            currentRight = rightLimit;
+            return;
+        }
+
+        float center = (leftLimit + rightLimit) * 0.5f;
+        float zoomRatio = Mathf.Max(1f, gameplayCamera.orthographicSize / baseCameraSize);
+        currentLeft = center + (leftLimit - center) * zoomRatio;
+        currentRight = center + (rightLimit - center) * zoomRatio;
+    }
+
     private void MoveSoloPlayer()
     {
         Transform ship = soloPhysicalPlayer == 1 ? player1 : player2;
@@ -130,7 +189,8 @@ public class Battleship : MonoBehaviour
 
         Vector3 position = ship.position;
         position.x += movement * moveSpeed * speedMultipliers[soloPhysicalPlayer - 1] * Time.deltaTime;
-        position.x = Mathf.Clamp(position.x, leftLimit, rightLimit);
+        GetCurrentHorizontalLimits(out float currentLeft, out float currentRight);
+        position.x = Mathf.Clamp(position.x, currentLeft, currentRight);
         ship.position = position;
     }
 
@@ -168,11 +228,8 @@ public class Battleship : MonoBehaviour
 
         position.x += movement * moveSpeed * speedMultipliers[0] * Time.deltaTime;
 
-        position.x = Mathf.Clamp(
-            position.x,
-            leftLimit,
-            rightLimit
-        );
+        GetCurrentHorizontalLimits(out float currentLeft, out float currentRight);
+        position.x = Mathf.Clamp(position.x, currentLeft, currentRight);
 
         player1.position = position;
     }
@@ -194,11 +251,8 @@ public class Battleship : MonoBehaviour
 
         position.x += movement * moveSpeed * speedMultipliers[1] * Time.deltaTime;
 
-        position.x = Mathf.Clamp(
-            position.x,
-            leftLimit,
-            rightLimit
-        );
+        GetCurrentHorizontalLimits(out float currentLeft, out float currentRight);
+        position.x = Mathf.Clamp(position.x, currentLeft, currentRight);
 
         player2.position = position;
     }

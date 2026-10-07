@@ -735,8 +735,15 @@ public class GameFlow : MonoBehaviour
         {
             DrawPlayerHud(soloPlayer, 0, false);
         }
+
+        if (state == ScreenState.Playing && levels != null)
+        {
+            DrawCenteredOutlinedLabel(new Rect(0f, 10f, width, 44f),
+                "WAVE  " + levels.CurrentWave, statStyle, Color.yellow, Color.black, 3);
+        }
+
         if (orbDropMultiplier > 1 && state == ScreenState.Playing)
-            DrawCenteredOutlinedLabel(new Rect(0f, 12f, width, 46f),
+            DrawCenteredOutlinedLabel(new Rect(0f, 58f, width, 46f),
                 "GALAXY DROPS  " + orbDropMultiplier + "X", statStyle,
                 new Color(0.75f, 0.4f, 1f), Color.black, 3);
         if (state != ScreenState.GameOver) return;
